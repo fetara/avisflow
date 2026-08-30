@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Admin {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  emailVerifiedAt DateTime?
+  totpSecret      String?
+  loginSessions   LoginSession[]
+  emailTokens     EmailToken[]
+  moderatedReviews Review[] @relation("Moderator")
+  createdQrCodes  QrCode[]
+  auditLogs       AuditLog[]
+  createdAt       DateTime  @default(now())
+}
+
+model LoginSession {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+model EmailToken {
+  id        String    @id @default(cuid())
+  adminId   String?
+  admin     Admin?    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  email     String
+  tokenHash String    @unique
+  type      String    // VALIDATE_EMAIL | RESET_PASSWORD | CUSTOMER_VERIFY
+  payload   String?   // JSON libre (ex: données client en attente)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Customer {
+  id         String    @id @default(cuid())
+  firstName  String
+  lastName   String
+  email      String    @unique
+  phone      String?
+  consentAt  DateTime
+  emailVerifiedAt DateTime?
+  sourceQrId String?
+  sourceQr   QrCode?   @relation(fields: [sourceQrId], references: [id], onDelete: SetNull)
+  anonymizedAt DateTime?
+  spins      Spin[]
+  reviews    Review[]
+  createdAt  DateTime  @default(now())
+}
+
+model QrCode {
+  id         String    @id @default(cuid())
+  label      String
+  slug       String    @unique
+  active     Boolean   @default(true)
+  destination String   @default("/jeu")
+  expiresAt  DateTime?
+  createdBy  String?
+  creator    Admin?    @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  scans      QrScan[]
+  customers  Customer[]
+  createdAt  DateTime  @default(now())
+}
+
+model QrScan {
+  id        String   @id @default(cuid())
+  qrCodeId  String
+  qrCode    QrCode   @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
+  sessionId String
+  userAgent String?
+  ipHash    String?
+  scannedAt DateTime @default(now())
+
+  @@index([qrCodeId, scannedAt])
+}
+
+model Prize {
+  id        String   @id @default(cuid())
+  label     String
+  weight    Int      @default(1)
+  stock     Int?     // null = illimité
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  spins     Spin[]
+  createdAt DateTime @default(now())
+}
+
+model Spin {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  prizeId    String
+  prize      Prize    @relation(fields: [prizeId], references: [id])
+  giftCode   String   @unique
+  createdAt  DateTime @default(now())
+}
+
+model Review {
+  id          String    @id @default(cuid())
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  rating      Int
+  comment     String?
+  photo       String?   // URL/data de la photo optionnelle
+  status      String    @default("pending") // pending | approved | rejected | hidden
+  autoApplied Boolean   @default(false)
+  googleClick Boolean   @default(false)
+  reply       String?
+  moderatedBy String?
+  moderator   Admin?    @relation("Moderator", fields: [moderatedBy], references: [id], onDelete: SetNull)
+  moderatedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([status, createdAt])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String?
+  admin     Admin?   @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  createdAt DateTime @default(now())
+}
