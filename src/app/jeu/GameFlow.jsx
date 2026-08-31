@@ -45,17 +45,9 @@ export default function GameFlow({ initial, src, err }) {
     }
   }
 
-  async function playSpin() {
-    setLoading(true); setError('');
-    try {
-      const res = await fetch('/api/spin', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Erreur');
-      setWinnerId(data.prizeId);
-      setSpin({ label: data.label, giftCode: data.giftCode });
-    } catch (e2) {
-      setError(e2.message);
-    }
+  function onLaunch(data) {
+    setWinnerId(data.prizeId);
+    setSpin({ label: data.label, giftCode: data.giftCode });
   }
 
   function onWheelDone() {
@@ -168,8 +160,8 @@ export default function GameFlow({ initial, src, err }) {
       {step === 'wheel' && (
         <div className="card">
           <h2 className="mb-6 text-center text-lg font-bold">Tentez votre chance !</h2>
-          <Wheel prizes={initial.prizes} winnerId={winnerId} onDone={onWheelDone} disabled={!winnerId} />
-          {!winnerId && <p className="mt-4 text-center text-sm text-gray-500">Cliquez pour lancer, le résultat est tiré au sort instantanément.</p>}
+          <Wheel prizes={initial.prizes} onLaunch={onLaunch} onDone={onWheelDone} />
+          <p className="mt-4 text-center text-sm text-gray-500">Cliquez pour lancer — le tirage au sort est effectué instantanément côté serveur.</p>
         </div>
       )}
 

@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-// Roue de la chance animée en Canvas. Le résultat est déterminé côté serveur ;
-// la roue s'arrête visuellement sur le segment du lot retourné par l'API.
-export default function Wheel({ prizes, winnerId, onDone, disabled }) {
+// Roue de la chance animée en Canvas. Le tirage est déterminé côté serveur :
+// au clic, onLaunch() appelle l'API (/api/spin) qui retourne le lot gagnant,
+// puis la roue s'arrête visuellement sur le segment correspondant.
+export default function Wheel({ prizes, onLaunch, onDone }) {
   const canvasRef = useRef(null);
   const [rotating, setRotating] = useState(false);
+  const [launching, setLaunching] = useState(false);
+  const [error, setError] = useState('');
   const rotationRef = useRef(0);
 
   const colors = ['#fbcfe8', '#fce7f3', '#f9a8d4', '#fdf2f8', '#f472b6', '#fbcfe8', '#fce7f3', '#f9a8d4'];
@@ -34,7 +37,6 @@ export default function Wheel({ prizes, winnerId, onDone, disabled }) {
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      // Texte du segment
       ctx.save();
       ctx.translate(center, center);
       ctx.rotate(angle + arc / 2);
@@ -47,7 +49,6 @@ export default function Wheel({ prizes, winnerId, onDone, disabled }) {
       ctx.restore();
     }
 
-    // Moyeu + contour
     ctx.beginPath();
     ctx.arc(center, center, radius, 0, Math.PI * 2);
     ctx.lineWidth = 8;
@@ -63,7 +64,6 @@ export default function Wheel({ prizes, winnerId, onDone, disabled }) {
     ctx.textBaseline = 'middle';
     ctx.fillText('★', center, center + 1);
 
-    // Pointeur en haut
     ctx.beginPath();
     ctx.moveTo(center - 14, 6);
     ctx.lineTo(center + 14, 6);
@@ -75,12 +75,29 @@ export default function Wheel({ prizes, winnerId, onDone, disabled }) {
 
   useEffect(() => { draw(rotationRef.current); }, [prizes]);
 
-  function spin() {
-    if (rotating || disabled) return;
+  async function launch() {
+    if (rotating || launching) return;
+    setError('');
+    setLaunching(true);
+    let winnerId;
+    try {
+      // Tirage CÔTÉ SERVEUR (probabilités pondérées, stock, 1 tour/e-mail)
+      const res = await fetch('/api/spin', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur du tirage');
+      winnerId = data.prizeId;
+      onLaunch?.(data);
+    } catch (e2) {
+      setError(e2.message);
+      setLaunching(false);
+      return;
+    }
+    setLaunching(false);
+
+    // Animation : arrêt sur le segment gagnant
     const winnerIndex = Math.max(0, prizes.findIndex((p) => p.id === winnerId));
     const n = prizes.length;
     const arc = 360 / n;
-    // Viser le milieu du segment gagnant sous le pointeur (haut)
     const targetBase = 360 - (winnerIndex * arc + arc / 2);
     const turns = 5 * 360;
     const from = rotationRef.current % 360;
@@ -105,8 +122,9 @@ export default function Wheel({ prizes, winnerId, onDone, disabled }) {
   return (
     <div className="flex flex-col items-center">
       <canvas ref={canvasRef} width={340} height={340} className="h-[300px] w-[300px] drop-shadow-xl sm:h-[340px] sm:w-[340px]" />
-      <button onClick={spin} disabled={rotating || disabled} className="btn-primary mt-6 w-full max-w-xs">
-        {rotating ? 'La roue tourne…' : 'Lancer la roue !'}
+      {error && <div className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+      <button onClick={launch} disabled={rotating || launching} className="btn-primary mt-6 w-full max-w-xs">
+        {rotating ? 'La roue tourne…' : launching ? 'Tirage en cours…' : 'Lancer la roue !'}
       </button>
     </div>
   );
