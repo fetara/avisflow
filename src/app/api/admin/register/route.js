@@ -11,8 +11,16 @@ const schema = z.object({
   password: z.string().min(10).max(100),
 });
 
-// Inscription admin : compte créé non validé, e-mail avec token signé valable 24h.
+// Auto-inscription DÉSACTIVÉE : les comptes entreprises sont créés par le super admin
+// (sinon n'importe qui pourrait créer un compte avec le rôle SUPER_ADMIN par défaut).
 export async function POST(req) {
+  return NextResponse.json(
+    { error: 'Les comptes administrateurs sont créés par le super admin de la plateforme.' },
+    { status: 403 }
+  );
+}
+
+export async function disabled_POST(req) {
   const ip = getClientIp(req);
   if (!rateLimit(`register:${ip}`, 3, 60 * 60 * 1000).ok) {
     return NextResponse.json({ error: 'Trop de tentatives.' }, { status: 429 });

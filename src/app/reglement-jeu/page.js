@@ -3,10 +3,21 @@ import { db, getSetting } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Règlement du jeu' };
 
-export default async function ReglementJeu() {
+export default async function ReglementJeu({ searchParams }) {
+  // Règlement PAR entreprise : ?src=slug du QR ; sans src -> lots globaux uniquement
+  const src = searchParams?.src || '';
   let prizes = [];
+  let companyName = null;
   try {
-    prizes = await db.prize.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' } });
+    let companyId = null;
+    if (src) {
+      const qr = await db.qrCode.findUnique({ where: { slug: src }, include: { company: true } });
+      if (qr?.company) {
+        companyId = qr.company.id;
+        companyName = qr.company.name;
+      }
+    }
+    prizes = await db.prize.findMany({ where: { active: true, companyId }, orderBy: { sortOrder: 'asc' } });
   } catch (e) { /* base indisponible */ }
 
   return (
@@ -15,7 +26,7 @@ export default async function ReglementJeu() {
       <div className="mt-6 space-y-5 text-sm leading-relaxed text-gray-700">
         <section>
           <h2 className="font-bold text-gray-900">1. Organisation</h2>
-          <p>[Nom du commerce] organise un jeu gratuit sans obligation d&apos;achat, réservé aux clients de la boutique, accessible via les QR codes affichés en magasin.</p>
+          <p>{companyName ? <strong>{companyName}</strong> : '[Nom du commerce]'} organise un jeu gratuit sans obligation d&apos;achat, réservé aux clients de la boutique, accessible via les QR codes affichés en magasin.</p>
         </section>
         <section>
           <h2 className="font-bold text-gray-900">2. Participation</h2>

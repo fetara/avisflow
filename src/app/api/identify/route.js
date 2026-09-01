@@ -28,17 +28,21 @@ export async function POST(req) {
   }
   const { firstName, lastName, email, phone, consent, sourceSlug } = parsed.data;
 
-  // Un seul tour par e-mail : déjà validé ?
-  const existing = await db.customer.findUnique({ where: { email } });
-  if (existing?.emailVerifiedAt) {
-    return NextResponse.json({ error: 'Cet e-mail a déjà participé au jeu. Un seul tour par e-mail !' }, { status: 409 });
-  }
-
-  // QR source éventuel
+  // QR source éventuel -> détermine l'entreprise du jeu
   let sourceQrId = null;
+  let companyId = null;
   if (sourceSlug) {
     const qr = await db.qrCode.findUnique({ where: { slug: sourceSlug } });
-    if (qr && qr.active) sourceQrId = qr.id;
+    if (qr && qr.active) {
+      sourceQrId = qr.id;
+      companyId = qr.companyId || null;
+    }
+  }
+
+  // Un seul tour par e-mail ET PAR ENTREPRISE : déjà validé chez ce commerçant ?
+  const existing = await db.customer.findFirst({ where: { email, companyId } });
+  if (existing?.emailVerifiedAt) {
+    return NextResponse.json({ error: 'Cet e-mail a déjà participé au jeu. Un seul tour par e-mail !' }, { status: 409 });
   }
 
   // Token de validation (30 min)
@@ -49,7 +53,7 @@ export async function POST(req) {
       tokenHash: sha256(token),
       type: 'CUSTOMER_VERIFY',
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
-      payload: JSON.stringify({ firstName, lastName, email, phone: phone || null, consentAt: new Date().toISOString(), sourceQrId, companyId: sourceQrId ? (await db.qrCode.findUnique({ where: { id: sourceQrId }, select: { companyId: true } }))?.companyId ?? null : null }),
+      payload: JSON.stringify({ firstName, lastName, email, phone: phone || null, consentAt: new Date().toISOString(), sourceQrId, companyId }),
     },
   });
 

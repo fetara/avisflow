@@ -70,7 +70,7 @@ model Customer {
   company    Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   firstName  String
   lastName   String
-  email      String    @unique
+  email      String
   phone      String?
   consentAt  DateTime
   emailVerifiedAt DateTime?
@@ -80,6 +80,9 @@ model Customer {
   spins      Spin[]
   reviews    Review[]
   createdAt  DateTime  @default(now())
+
+  // Un e-mail est unique PAR entreprise (le même client peut jouer chez plusieurs commerces)
+  @@unique([companyId, email])
 }
 
 model QrCode {

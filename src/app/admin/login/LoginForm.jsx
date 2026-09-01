@@ -88,11 +88,6 @@ export default function LoginForm() {
       <button type="submit" disabled={loading} className="btn-primary w-full">
         {loading ? '…' : mode === 'register' ? 'Créer le compte' : mode === '2fa' ? 'Valider le code' : 'Se connecter'}
       </button>
-      {mode === 'login' && (
-        <button type="button" onClick={() => setMode('register')} className="w-full text-center text-sm text-gray-500 hover:text-brand-600">
-          Créer un compte administrateur →
-        </button>
-      )}
     </form>
   );
 }

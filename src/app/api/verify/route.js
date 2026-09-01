@@ -14,20 +14,28 @@ export async function GET(req) {
   }
 
   const data = JSON.parse(row.payload);
-  const customer = await db.customer.upsert({
-    where: { email: data.email },
-    update: { emailVerifiedAt: new Date() },
-    create: {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      phone: data.phone,
-      consentAt: new Date(data.consentAt),
-      emailVerifiedAt: new Date(),
-      sourceQrId: data.sourceQrId,
-      companyId: data.companyId || null,
-    },
-  });
+  // Recherche PAR entreprise : le même e-mail peut exister chez plusieurs commerces
+  const companyId = data.companyId || null;
+  let customer = await db.customer.findFirst({ where: { email: data.email, companyId } });
+  if (customer) {
+    customer = await db.customer.update({
+      where: { id: customer.id },
+      data: { emailVerifiedAt: new Date() },
+    });
+  } else {
+    customer = await db.customer.create({
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        consentAt: new Date(data.consentAt),
+        emailVerifiedAt: new Date(),
+        sourceQrId: data.sourceQrId,
+        companyId,
+      },
+    });
+  }
 
   await db.emailToken.update({ where: { id: row.id }, data: { usedAt: new Date() } });
 
