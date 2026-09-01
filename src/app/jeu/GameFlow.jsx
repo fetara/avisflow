@@ -8,7 +8,7 @@ function Stars({ n }) {
   return <span className="text-amber-400">{'★'.repeat(n)}<span className="text-gray-300">{'★'.repeat(5 - n)}</span></span>;
 }
 
-export default function GameFlow({ initial, src, err }) {
+export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null }) {
   const searchParams = useSearchParams();
   const [step, setStep] = useState(initial.step || 'identify');
   const [spin, setSpin] = useState(initial.spin);
@@ -93,7 +93,11 @@ export default function GameFlow({ initial, src, err }) {
     <main className="mx-auto min-h-screen max-w-lg px-4 py-8">
       <div className="mb-8 text-center">
         <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-3xl shadow-lg">🎡</div>
-        <h1 className="text-2xl font-extrabold">Roue de la chance</h1>
+        <h1 className="text-2xl font-extrabold">{headline || 'Scannez, jouez, gagnez !'}</h1>
+        {companyName
+          ? <p className="mt-1 text-sm font-semibold text-brand-600">Organisé par {companyName}</p>
+          : <p className="mt-1 text-sm text-gray-400">Roue de la chance</p>}
+        {sub && <p className="mt-1 text-sm text-gray-500">{sub}</p>}
       </div>
 
       {error && <div className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
@@ -103,7 +107,9 @@ export default function GameFlow({ initial, src, err }) {
       {step === 'identify' && (
         <form onSubmit={submitIdentify} className="card">
           <h2 className="text-lg font-bold">Qui êtes-vous ?</h2>
-          <p className="mt-1 text-sm text-gray-500">Un e-mail de confirmation vous sera envoyé pour débloquer le jeu.</p>
+          <p className="mt-1 text-sm text-gray-500">
+            {companyName ? `Un e-mail de confirmation vous sera envoyé pour débloquer la roue de ${companyName}.` : 'Un e-mail de confirmation vous sera envoyé pour débloquer le jeu.'}
+          </p>
           <div className="mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
