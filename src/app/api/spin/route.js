@@ -30,7 +30,7 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Vous avez déjà joué.', already: true, prizeId: already.prizeId }, { status: 409 });
   }
 
-  const prizes = await db.prize.findMany({ orderBy: { sortOrder: 'asc' } });
+  const prizes = await db.prize.findMany({ where: { companyId: customer.companyId }, orderBy: { sortOrder: 'asc' } });
   const prize = weightedPick(prizes);
   if (!prize) return NextResponse.json({ error: 'Aucun lot disponible.' }, { status: 503 });
 
@@ -62,9 +62,11 @@ export async function POST(req) {
 }
 
 // Segments pour dessiner la roue (avant tirage)
-export async function GET() {
+export async function GET(req) {
+  const session = await getPlayerSession();
+  const customer = session?.sub ? await db.customer.findUnique({ where: { id: session.sub } }) : null;
   const prizes = await db.prize.findMany({
-    where: { active: true },
+    where: { active: true, companyId: customer?.companyId ?? null },
     orderBy: { sortOrder: 'asc' },
     select: { id: true, label: true, weight: true },
   });

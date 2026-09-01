@@ -38,7 +38,8 @@ export async function getAdminSession() {
   const token = store.get(ADMIN_COOKIE)?.value;
   if (!token) return null;
   const payload = await verifyToken(token);
-  return payload?.role === 'admin' ? payload : null;
+  // Rôles acceptés : SUPER_ADMIN, COMPANY_ADMIN, et legacy "admin"
+  return payload && ['SUPER_ADMIN', 'COMPANY_ADMIN', 'admin'].includes(payload.role) ? payload : null;
 }
 
 export async function getPlayerSession() {

@@ -15,3 +15,27 @@ export async function getSetting(key, fallback = null) {
 export async function setSetting(key, value) {
   await db.setting.upsert({ where: { key }, update: { value }, create: { key, value } });
 }
+
+// Réglages isolés par entreprise (roue, avis Google, textes du jeu)
+export async function getCompanySetting(companyId, key, fallback = null) {
+  if (!companyId) return getSetting(key, fallback);
+  const row = await db.companySetting.findUnique({
+    where: { companyId_key: { companyId, key } },
+  });
+  return row ? row.value : getSetting(key, fallback);
+}
+
+export async function setCompanySetting(companyId, key, value) {
+  await db.companySetting.upsert({
+    where: { companyId_key: { companyId, key } },
+    update: { value },
+    create: { companyId, key, value },
+  });
+}
+
+export async function getCompanySettings(companyId) {
+  if (!companyId) return {};
+  const rows = await db.companySetting.findMany({ where: { companyId } });
+  return Object.fromEntries(rows.map((r) => [r.key, r.value]));
+}
+

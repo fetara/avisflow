@@ -1,7 +1,7 @@
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 import { db } from '@/lib/db';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requirePermission, companyScope } from '@/lib/admin-guard';
 
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
@@ -17,11 +17,11 @@ function textBytes(str) {
 // Téléchargement des visuels d'impression : qr.png | qr.svg | poster.pdf
 // Query : format=png|svg|pdf, poster=comptoir|tenture|sticker (pdf), text=accroche, dark=hex, light=hex, logo=1
 export async function GET(req, { params }) {
-  const guard = await requireAdmin(req);
+  const guard = await requirePermission(req, 'manage_qrcodes');
   if (guard.error) return guard.error;
 
   const { id } = params;
-  const qr = await db.qrCode.findUnique({ where: { id } });
+  const qr = await db.qrCode.findFirst({ where: { id, companyId: companyScope(guard) } });
   if (!qr) return new Response('QR introuvable', { status: 404 });
 
   const sp = new URL(req.url).searchParams;

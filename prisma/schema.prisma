@@ -7,10 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Roles : SUPER_ADMIN (plateforme) | COMPANY_ADMIN (utilisateur d'une entreprise)
+// Le legacy "admin" (sessions/comples existants) est traité comme SUPER_ADMIN.
 model Admin {
   id              String    @id @default(cuid())
   email           String    @unique
   passwordHash    String
+  role            String    @default("SUPER_ADMIN")
+  companyId       String?
+  company         Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  // Matrice de droits (JSON string), uniquement pour COMPANY_ADMIN.
+  // Clés : manage_prizes | configure_wheel | manage_qrcodes | view_customers | moderate_reviews | view_stats
+  permissions     String    @default("[]")
   emailVerifiedAt DateTime?
   totpSecret      String?
   loginSessions   LoginSession[]
@@ -19,6 +27,19 @@ model Admin {
   createdQrCodes  QrCode[]
   auditLogs       AuditLog[]
   createdAt       DateTime  @default(now())
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  active    Boolean  @default(true)
+  admins    Admin[]
+  qrCodes   QrCode[]
+  prizes    Prize[]
+  customers Customer[]
+  settings  CompanySetting[]
+  createdAt DateTime @default(now())
 }
 
 model LoginSession {
@@ -45,6 +66,8 @@ model EmailToken {
 
 model Customer {
   id         String    @id @default(cuid())
+  companyId  String?
+  company    Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   firstName  String
   lastName   String
   email      String    @unique
@@ -61,6 +84,8 @@ model Customer {
 
 model QrCode {
   id         String    @id @default(cuid())
+  companyId  String?
+  company    Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   label      String
   slug       String    @unique
   active     Boolean   @default(true)
@@ -87,6 +112,8 @@ model QrScan {
 
 model Prize {
   id        String   @id @default(cuid())
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
   label     String
   weight    Int      @default(1)
   stock     Int?     // null = illimité
@@ -128,6 +155,17 @@ model Review {
 model Setting {
   key   String @id
   value String
+}
+
+// Réglages de la roue / du jeu, isolés par entreprise
+model CompanySetting {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  key       String
+  value     String
+
+  @@unique([companyId, key])
 }
 
 model AuditLog {

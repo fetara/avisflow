@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { requireAdmin, logAction } from '@/lib/admin-guard';
+import { requirePermission, companyScope, logAction } from '@/lib/admin-guard';
 
-// Liste + filtres + export CSV des clients.
+// Liste + filtres + export CSV des clients (isolés par entreprise).
 export async function GET(req) {
-  const guard = await requireAdmin(req);
+  const guard = await requirePermission(req, 'view_customers');
   if (guard.error) return guard.error;
 
   const sp = new URL(req.url).searchParams;
-  const where = {};
+  const where = { companyId: companyScope(guard) };
   const q = sp.get('q');
   const source = sp.get('source');
   if (q) {
@@ -51,13 +51,13 @@ export async function GET(req) {
 
 // Suppression RGPD : anonymisation du client (droit à l'oubli).
 export async function DELETE(req) {
-  const guard = await requireAdmin(req);
+  const guard = await requirePermission(req, 'view_customers');
   if (guard.error) return guard.error;
 
   const id = new URL(req.url).searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'id requis' }, { status: 400 });
 
-  const customer = await db.customer.findUnique({ where: { id } });
+  const customer = await db.customer.findFirst({ where: { id, companyId: companyScope(guard) } });
   if (!customer) return NextResponse.json({ error: 'Client introuvable.' }, { status: 404 });
 
   await db.$transaction([

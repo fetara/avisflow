@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { requireAdmin, logAction } from '@/lib/admin-guard';
+import { requirePermission, companyScope, logAction } from '@/lib/admin-guard';
 
 const actionSchema = z.object({
   id: z.string(),
@@ -11,11 +11,11 @@ const actionSchema = z.object({
 
 // Liste des avis avec filtres (statut, note min, mot-clé, date, source QR).
 export async function GET(req) {
-  const guard = await requireAdmin(req);
+  const guard = await requirePermission(req, 'moderate_reviews');
   if (guard.error) return guard.error;
 
   const sp = new URL(req.url).searchParams;
-  const where = {};
+  const where = { customer: { companyId: companyScope(guard) } };
   const status = sp.get('status');
   const minRating = parseInt(sp.get('minRating') || '0', 10);
   const keyword = sp.get('keyword');
@@ -45,12 +45,18 @@ export async function GET(req) {
 
 // Modération : approuver / rejeter / masquer / répondre.
 export async function PATCH(req) {
-  const guard = await requireAdmin(req);
+  const guard = await requirePermission(req, 'moderate_reviews');
   if (guard.error) return guard.error;
 
   const parsed = actionSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Requête invalide.' }, { status: 400 });
   const { id, action, reply } = parsed.data;
+
+  // Isolation : l'avis doit appartenir à un client de l'entreprise (sauf super admin)
+  const owned = await db.review.findFirst({
+    where: { id, customer: { companyId: companyScope(guard) } },
+  });
+  if (!owned) return NextResponse.json({ error: 'Avis introuvable.' }, { status: 404 });
 
   const data = { moderatedBy: guard.admin.id, moderatedAt: new Date() };
   if (action === 'approve') data.status = 'approved';

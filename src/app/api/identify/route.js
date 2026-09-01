@@ -49,7 +49,7 @@ export async function POST(req) {
       tokenHash: sha256(token),
       type: 'CUSTOMER_VERIFY',
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
-      payload: JSON.stringify({ firstName, lastName, email, phone: phone || null, consentAt: new Date().toISOString(), sourceQrId }),
+      payload: JSON.stringify({ firstName, lastName, email, phone: phone || null, consentAt: new Date().toISOString(), sourceQrId, companyId: sourceQrId ? (await db.qrCode.findUnique({ where: { id: sourceQrId }, select: { companyId: true } }))?.companyId ?? null : null }),
     },
   });
 

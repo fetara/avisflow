@@ -25,6 +25,7 @@ export async function GET(req) {
       consentAt: new Date(data.consentAt),
       emailVerifiedAt: new Date(),
       sourceQrId: data.sourceQrId,
+      companyId: data.companyId || null,
     },
   });
 

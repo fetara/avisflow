@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { requireAdmin, logAction } from '@/lib/admin-guard';
+import { requirePermission, companyScope, logAction } from '@/lib/admin-guard';
 import { slugify } from '@/lib/utils';
 
 const qrSchema = z.object({
@@ -13,9 +13,10 @@ const qrSchema = z.object({
 });
 
 export async function GET(req) {
-  const guard = await requireAdmin(req);
+  const guard = await requirePermission(req, 'manage_qrcodes');
   if (guard.error) return guard.error;
   const qrs = await db.qrCode.findMany({
+    where: { companyId: companyScope(guard) },
     orderBy: { createdAt: 'desc' },
     include: { _count: { select: { scans: true, customers: true } } },
   });
@@ -23,7 +24,7 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
-  const guard = await requireAdmin(req);
+  const guard = await requirePermission(req, 'manage_qrcodes');
   if (guard.error) return guard.error;
   const parsed = qrSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'QR code invalide.' }, { status: 400 });
@@ -41,6 +42,7 @@ export async function POST(req) {
       active,
       expiresAt: expiresAt ? new Date(expiresAt) : null,
       createdBy: guard.admin.id,
+      companyId: guard.companyId,
     },
   });
   await logAction(guard.admin.id, 'qr.create', 'QrCode', qr.id);
@@ -48,7 +50,7 @@ export async function POST(req) {
 }
 
 export async function PATCH(req) {
-  const guard = await requireAdmin(req);
+  const guard = await requirePermission(req, 'manage_qrcodes');
   if (guard.error) return guard.error;
   const body = await req.json().catch(() => null);
   const parsed = qrSchema.extend({ id: z.string() }).safeParse(body);
@@ -57,17 +59,18 @@ export async function PATCH(req) {
 
   const data = { label, active, destination: destination || '/jeu', expiresAt: expiresAt ? new Date(expiresAt) : null };
   if (slug) data.slug = slugify(slug);
-  const qr = await db.qrCode.update({ where: { id }, data }).catch(() => null);
-  if (!qr) return NextResponse.json({ error: 'QR code introuvable.' }, { status: 404 });
+  const res = await db.qrCode.updateMany({ where: { id, companyId: companyScope(guard) }, data }).catch(() => null);
+  if (!res || res.count === 0) return NextResponse.json({ error: 'QR code introuvable.' }, { status: 404 });
   await logAction(guard.admin.id, 'qr.update', 'QrCode', id);
-  return NextResponse.json({ ok: true, qr });
+  return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(req) {
-  const guard = await requireAdmin(req);
+  const guard = await requirePermission(req, 'manage_qrcodes');
   if (guard.error) return guard.error;
   const id = new URL(req.url).searchParams.get('id');
-  await db.qrCode.delete({ where: { id } }).catch(() => null);
+  const res = await db.qrCode.deleteMany({ where: { id, companyId: companyScope(guard) } }).catch(() => null);
+  if (!res || res.count === 0) return NextResponse.json({ error: 'QR code introuvable.' }, { status: 404 });
   await logAction(guard.admin.id, 'qr.delete', 'QrCode', id);
   return NextResponse.json({ ok: true });
 }

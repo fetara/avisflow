@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
+import { getAdminSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,20 +15,24 @@ function FunnelCard({ label, value, hint, accent }) {
 }
 
 export default async function Dashboard() {
+  // Isolation multi-entreprise : le super admin voit tout, l'admin entreprise son périmètre
+  const session = await getAdminSession();
+  const companyId = session?.companyId || null;
+  const customerWhere = { companyId };
   const [scanCount, customers, verified, spins, reviews, approved, googleClicks, ratingDist, prizes, qrs, spinRows, reviewRows] =
     await Promise.all([
-      db.qrScan.count(),
-      db.customer.count(),
-      db.customer.count({ where: { emailVerifiedAt: { not: null } } }),
-      db.spin.count(),
-      db.review.count(),
-      db.review.count({ where: { status: 'approved' } }),
-      db.review.count({ where: { googleClick: true } }),
-      db.review.groupBy({ by: ['rating'], _count: { _all: true } }),
-      db.prize.findMany({ include: { _count: { select: { spins: true } } }, orderBy: { sortOrder: 'asc' } }),
-      db.qrCode.findMany({ include: { _count: { select: { scans: true } } }, orderBy: { createdAt: 'desc' } }),
-      db.spin.findMany({ select: { customer: { select: { sourceQrId: true } } } }),
-      db.review.findMany({ select: { googleClick: true, customer: { select: { sourceQrId: true } } } }),
+      db.qrScan.count({ where: { qrCode: { companyId } } }),
+      db.customer.count({ where: customerWhere }),
+      db.customer.count({ where: { ...customerWhere, emailVerifiedAt: { not: null } } }),
+      db.spin.count({ where: { customer: { companyId } } }),
+      db.review.count({ where: { customer: { companyId } } }),
+      db.review.count({ where: { customer: { companyId }, status: 'approved' } }),
+      db.review.count({ where: { customer: { companyId }, googleClick: true } }),
+      db.review.groupBy({ by: ['rating'], _count: { _all: true }, where: { customer: { companyId } } }),
+      db.prize.findMany({ where: { companyId }, include: { _count: { select: { spins: true } } }, orderBy: { sortOrder: 'asc' } }),
+      db.qrCode.findMany({ where: { companyId }, include: { _count: { select: { scans: true } } }, orderBy: { createdAt: 'desc' } }),
+      db.spin.findMany({ where: { customer: { companyId } }, select: { customer: { select: { sourceQrId: true } } } }),
+      db.review.findMany({ where: { customer: { companyId } }, select: { googleClick: true, customer: { select: { sourceQrId: true } } } }),
     ]);
 
   const maxRating = Math.max(1, ...ratingDist.map((r) => r._count._all));

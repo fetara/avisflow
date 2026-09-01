@@ -68,12 +68,17 @@ export async function POST(req) {
     await db.emailToken.update({ where: { id: row.id }, data: { usedAt: new Date() } });
   }
 
-  const jwt = await signAdminSession({ sub: admin.id, email: admin.email, role: 'admin' });
+  const jwt = await signAdminSession({
+    sub: admin.id,
+    email: admin.email,
+    role: admin.role || 'admin',
+    companyId: admin.companyId || null,
+  });
   await db.loginSession.create({
     data: { adminId: admin.id, ip: sha256(ip).slice(0, 16), userAgent: (req.headers.get('user-agent') || '').slice(0, 255) },
   });
 
-  const res = NextResponse.json({ ok: true });
+  const res = NextResponse.json({ ok: true, role: admin.role || 'admin' });
   res.cookies.set(ADMIN_COOKIE_NAME, jwt, adminCookieOptions());
   return res;
 }

@@ -15,6 +15,7 @@ async function main() {
     create: {
       email,
       passwordHash: await bcrypt.hash(password, 12),
+      role: 'SUPER_ADMIN',
       emailVerifiedAt: new Date(),
     },
   });

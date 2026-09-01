@@ -50,7 +50,7 @@ export default function LoginForm() {
         return;
       }
       if (!res.ok) throw new Error(data.error || 'Erreur de connexion');
-      router.push('/admin');
+      router.push(data.role === 'SUPER_ADMIN' ? '/super' : '/admin');
       router.refresh();
     } catch (e2) {
       setError(e2.message);
