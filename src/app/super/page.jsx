@@ -17,6 +17,7 @@ export default function SuperAdminPage() {
   const [error, setError] = useState('');
   const [form, setForm] = useState({ name: '', adminEmail: '', adminPassword: '' });
   const [permEdit, setPermEdit] = useState(null); // { company, selected:Set }
+  const [totpView, setTotpView] = useState(null); // { company, otpauthUrl, secret }
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -73,6 +74,30 @@ export default function SuperAdminPage() {
   async function impersonate(c) {
     const res = await fetch(`/api/super/companies/${c.id}/impersonate`, { method: 'POST' });
     if (res.ok) window.location.href = '/admin';
+  }
+
+  async function showTotp(c) {
+    const res = await fetch(`/api/super/companies/${c.id}/totp?json=1`);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      // Pas encore de secret : on en génère un
+      const created = await fetch(`/api/super/companies/${c.id}/totp`, { method: 'POST' });
+      const data = await created.json().catch(() => ({}));
+      if (!created.ok) { alert(data.error || 'Erreur'); return; }
+      setTotpView({ company: c, ...data });
+      load();
+      return;
+    }
+    setTotpView({ company: c, ...json });
+  }
+
+  async function regenTotp(c) {
+    if (!window.confirm('Régénérer le secret TOTP ? Les appareils déjà configurés devront être re-scannés.')) return;
+    const res = await fetch(`/api/super/companies/${c.id}/totp`, { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { alert(data.error || 'Erreur'); return; }
+    setTotpView({ company: c, ...data });
+    load();
   }
 
   async function savePermissions() {
@@ -138,7 +163,7 @@ export default function SuperAdminPage() {
           <thead className="bg-gray-950 text-xs uppercase text-gray-500">
             <tr>
               <th className="p-3">Entreprise</th><th className="p-3">Statut</th><th className="p-3">Admin(s)</th>
-              <th className="p-3">QR</th><th className="p-3">Lots</th><th className="p-3">Clients</th><th className="p-3">Parties</th>
+              <th className="p-3">QR</th><th className="p-3">Lots</th><th className="p-3">Clients</th><th className="p-3">Parties</th><th className="p-3">TOTP</th>
               <th className="p-3">Actions</th>
             </tr>
           </thead>
@@ -161,6 +186,12 @@ export default function SuperAdminPage() {
                 <td className="p-3">{c.counts.customers}</td>
                 <td className="p-3">{c.counts.spins}</td>
                 <td className="p-3">
+                  <button onClick={() => showTotp(c)}
+                    className={`rounded-lg border px-2 py-1 text-xs hover:bg-gray-800 ${c.totpConfigured ? 'border-emerald-800 text-emerald-400' : 'border-gray-700 text-gray-400'}`}>
+                    {c.totpConfigured ? '🔳 QR' : '＋ Générer'}
+                  </button>
+                </td>
+                <td className="p-3">
                   <div className="flex flex-wrap gap-1.5">
                     <button onClick={() => setPermEdit({ company: c, selected: new Set(JSON.parse(c.admins[0]?.permissions || '[]')) })}
                       className="rounded-lg border border-gray-700 px-2 py-1 text-xs hover:bg-gray-800">🔐 Droits</button>
@@ -175,7 +206,7 @@ export default function SuperAdminPage() {
               </tr>
             ))}
             {companies.length === 0 && (
-              <tr><td colSpan={8} className="p-6 text-center text-gray-500">Aucune entreprise. Créez la première ci-dessus.</td></tr>
+              <tr><td colSpan={9} className="p-6 text-center text-gray-500">Aucune entreprise. Créez la première ci-dessus.</td></tr>
             )}
           </tbody>
         </table>
@@ -221,6 +252,38 @@ export default function SuperAdminPage() {
               </button>
               <button onClick={() => setPermEdit(null)} className="rounded-lg border border-gray-700 px-4 py-2 text-sm hover:bg-gray-800">
                 Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modale QR code TOTP */}
+      {totpView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setTotpView(null)}>
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-gray-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold">2FA TOTP — {totpView.company.name}</h3>
+            <p className="mt-1 text-xs text-gray-500">
+              L'admin entreprise scanne ce QR avec Google Authenticator / Authy. Sa connexion exigera ensuite ce code à 6 chiffres.
+            </p>
+            <div className="mt-4 flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/api/super/companies/${totpView.company.id}/totp?_=${totpView.secret.slice(-6)}`}
+                alt="QR code TOTP"
+                className="h-56 w-56 rounded-xl border"
+              />
+            </div>
+            <p className="mt-3 text-center text-xs text-gray-500">
+              Clé manuelle : <span className="select-all font-mono font-semibold text-gray-800">{totpView.secret}</span>
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button onClick={() => regenTotp(totpView.company)}
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold hover:bg-gray-50">
+                ↻ Régénérer
+              </button>
+              <button onClick={() => setTotpView(null)}
+                className="flex-1 rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
+                Fermer
               </button>
             </div>
           </div>

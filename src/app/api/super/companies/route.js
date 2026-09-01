@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
+import { authenticator } from 'otplib';
 import { db } from '@/lib/db';
 import { requireSuperAdmin, logAction } from '@/lib/admin-guard';
 import { slugify } from '@/lib/utils';
@@ -20,7 +21,7 @@ export async function GET(req) {
   const companies = await db.company.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
-      admins: { select: { id: true, email: true, emailVerifiedAt: true, permissions: true, role: true } },
+      admins: { select: { id: true, email: true, emailVerifiedAt: true, permissions: true, role: true, totpSecret: true } },
       _count: { select: { qrCodes: true, prizes: true, customers: true } },
     },
   });
@@ -41,6 +42,7 @@ export async function GET(req) {
       active: c.active,
       createdAt: c.createdAt,
       admins: c.admins.filter((a) => a.role === 'COMPANY_ADMIN'),
+      totpConfigured: c.admins.some((a) => a.role === 'COMPANY_ADMIN' && a.totpSecret),
       counts: {
         qrCodes: c._count.qrCodes,
         prizes: c._count.prizes,
@@ -77,6 +79,7 @@ export async function POST(req) {
           passwordHash: await bcrypt.hash(adminPassword, 12),
           role: 'COMPANY_ADMIN',
           permissions: JSON.stringify(ALL_PERMISSIONS),
+          totpSecret: authenticator.generateSecret(),
           emailVerifiedAt: new Date(),
         },
       },
