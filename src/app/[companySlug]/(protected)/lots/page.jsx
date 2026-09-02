@@ -1,25 +1,31 @@
 'use client';
 
+import { useParams } from 'next/navigation';
+
 import { useCallback, useEffect, useState } from 'react';
+import { TableSkeleton, EmptyState } from '@/components/ui';
+import { useToast } from '@/components/Toast';
 
 const EMPTY = { label: '', weight: 1, stock: '', active: true, sortOrder: 0 };
 
 export default function LotsPage() {
-  const [prizes, setPrizes] = useState([]);
+  const { companySlug } = useParams();
+  const [prizes, setPrizes] = useState(null); // null = chargement
   const [newPrize, setNewPrize] = useState(EMPTY);
   const [error, setError] = useState('');
+  const { show, Toast } = useToast();
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/admin/prizes');
+    const res = await fetch(`/api/${companySlug}/prizes`);
     if (res.ok) setPrizes((await res.json()).prizes || []);
-  }, []);
+  }, [companySlug]);
   useEffect(() => { load(); }, [load]);
 
   const totalWeight = prizes.filter((p) => p.active).reduce((s, p) => s + p.weight, 0) || 1;
 
   async function update(p, patch) {
     setPrizes((cur) => cur.map((x) => (x.id === p.id ? { ...x, ...patch } : x)));
-    await fetch('/api/admin/prizes', {
+    await fetch(`/api/${companySlug}/prizes`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -36,7 +42,7 @@ export default function LotsPage() {
   async function add(e) {
     e.preventDefault();
     setError('');
-    const res = await fetch('/api/admin/prizes', {
+    const res = await fetch(`/api/${companySlug}/prizes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -48,15 +54,17 @@ export default function LotsPage() {
       }),
     });
     const data = await res.json();
-    if (!res.ok) return setError(data.error);
+    if (!res.ok) { setError(data.error); show(data.error, 'error'); return; }
     setNewPrize(EMPTY);
+    show('Lot ajouté !');
     load();
   }
 
   async function remove(p) {
     if (!confirm(`Supprimer le lot « ${p.label} » ? (impossible s'il a déjà été gagné)`)) return;
-    const res = await fetch(`/api/admin/prizes?id=${p.id}`, { method: 'DELETE' });
-    if (!res.ok) alert((await res.json()).error);
+    const res = await fetch(`/api/${companySlug}/prizes?id=${p.id}`, { method: 'DELETE' });
+    if (!res.ok) { show((await res.json()).error || 'Erreur', 'error'); return; }
+    show('Lot supprimé');
     load();
   }
 
@@ -65,6 +73,15 @@ export default function LotsPage() {
       <h1 className="text-2xl font-bold">Lots de la roue</h1>
       <p className="text-sm text-gray-500">Poids = probabilité relative. Ex. poids 4 sur total 10 → 40 % de chances. Stock vide = illimité.</p>
 
+      {prizes === null ? (
+        <div className="card"><TableSkeleton rows={5} cols={6} /></div>
+      ) : prizes.length === 0 ? (
+        <EmptyState
+          icon="🎁"
+          title="Aucun lot pour l'instant"
+          text="Créez votre premier lot ci-dessous pour que votre roue devienne jouable. Pensez à un lot « Rejouez demain ! » pour les non-gagnants."
+        />
+      ) : (
       <div className="overflow-x-auto rounded-xl border bg-white">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 text-xs uppercase text-gray-500">
@@ -105,6 +122,7 @@ export default function LotsPage() {
           </tbody>
         </table>
       </div>
+      )}
 
       <form onSubmit={add} className="card !p-4 flex flex-wrap items-end gap-3">
         <div className="flex-1 min-w-48">
@@ -125,6 +143,7 @@ export default function LotsPage() {
         <button className="btn-primary !py-2">Ajouter</button>
         {error && <p className="text-sm text-red-600">{error}</p>}
       </form>
+      <Toast />
     </div>
   );
 }

@@ -1,10 +1,13 @@
 'use client';
 
+import { useParams } from 'next/navigation';
+
 import { useCallback, useEffect, useState } from 'react';
 
 const STATUS = { pending: ['En attente', 'bg-amber-100 text-amber-800'], approved: ['Approuvé', 'bg-emerald-100 text-emerald-800'], rejected: ['Rejeté', 'bg-red-100 text-red-800'], hidden: ['Masqué', 'bg-gray-200 text-gray-600'] };
 
 export default function AvisPage() {
+  const { companySlug } = useParams();
   const [data, setData] = useState({ reviews: [], total: 0 });
   const [filters, setFilters] = useState({ status: 'all', minRating: 0, keyword: '', source: '' });
   const [sources, setSources] = useState([]);
@@ -12,16 +15,16 @@ export default function AvisPage() {
 
   const load = useCallback(async () => {
     const qs = new URLSearchParams(Object.entries(filters).filter(([, v]) => v !== '' && v !== 0));
-    const res = await fetch(`/api/admin/reviews?${qs}`);
+    const res = await fetch(`/api/${companySlug}/reviews?${qs}`);
     if (res.ok) setData(await res.json());
   }, [filters]);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { fetch('/api/admin/qrcodes').then((r) => r.json()).then((d) => setSources(d.qrs || [])); }, []);
+  useEffect(() => { fetch(`/api/${companySlug}/qrcodes`).then((r) => r.json()).then((d) => setSources(d.qrs || [])); }, []);
 
   async function act(id, action, reply) {
     setBusy(true);
-    await fetch('/api/admin/reviews', {
+    await fetch(`/api/${companySlug}/reviews`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, action, reply }),

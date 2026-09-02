@@ -14,7 +14,8 @@ function FunnelCard({ label, value, hint, accent }) {
   );
 }
 
-export default async function Dashboard() {
+export default async function Dashboard({ params }) {
+  const { companySlug } = await params;
   // Isolation multi-entreprise : le super admin voit tout, l'admin entreprise son périmètre
   const session = await getAdminSession();
   const companyId = session?.companyId || null;
@@ -87,7 +88,7 @@ export default async function Dashboard() {
               <span className="font-semibold">{p._count.spins}{p.stock !== null ? <span className="text-gray-400"> / stock {p.stock}</span> : ''}</span>
             </div>
           ))}
-          <Link href="/admin/lots" className="mt-3 inline-block text-sm text-brand-600 hover:underline">Gérer les lots →</Link>
+          <Link href={`/${companySlug}/lots`} className="mt-3 inline-block text-sm text-brand-600 hover:underline">Gérer les lots →</Link>
         </section>
       </div>
 
@@ -123,7 +124,7 @@ export default async function Dashboard() {
                   </tr>
                 );
               })}
-              {qrs.length === 0 && <tr><td colSpan={8} className="p-6 text-center text-gray-400">Aucun QR code — <Link className="text-brand-600" href="/admin/qr-codes">créez-en un</Link></td></tr>}
+              {qrs.length === 0 && <tr><td colSpan={8} className="p-6 text-center text-gray-400">Aucun QR code — <Link className="text-brand-600" href={`/${companySlug}/qr-codes`}>créez-en un</Link></td></tr>}
             </tbody>
           </table>
         </div>

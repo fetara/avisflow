@@ -39,8 +39,10 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Compte non validé : vérifiez vos e-mails.' }, { status: 403 });
   }
 
-  // 2FA - TOTP
-  if (admin.totpSecret) {
+  // 2FA - TOTP, effective seulement si activée sur l'utilisateur ET l'entreprise
+  const company = admin.companyId ? await db.company.findUnique({ where: { id: admin.companyId } }) : null;
+  const twoFactorActive = Boolean(admin.totpSecret) && admin.twoFactorEnabled !== false && company?.twoFactorEnabled !== false;
+  if (twoFactorActive) {
     if (!totp) return NextResponse.json({ twoFactor: 'totp' }, { status: 401 });
     if (!authenticator.verify({ token: totp, secret: admin.totpSecret })) {
       return NextResponse.json({ error: 'Code TOTP invalide.', twoFactor: 'totp' }, { status: 401 });
@@ -73,12 +75,13 @@ export async function POST(req) {
     email: admin.email,
     role: admin.role || 'admin',
     companyId: admin.companyId || null,
+    companySlug: company?.slug || null,
   });
   await db.loginSession.create({
     data: { adminId: admin.id, ip: sha256(ip).slice(0, 16), userAgent: (req.headers.get('user-agent') || '').slice(0, 255) },
   });
 
-  const res = NextResponse.json({ ok: true, role: admin.role || 'admin' });
+  const res = NextResponse.json({ ok: true, role: admin.role || 'admin', companySlug: company?.slug || null });
   res.cookies.set(ADMIN_COOKIE_NAME, jwt, adminCookieOptions());
   return res;
 }

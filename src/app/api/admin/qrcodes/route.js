@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { requirePermission, companyScope, logAction } from '@/lib/admin-guard';
+import { requirePermission, companyScope, logAction, logCrossAttempt } from '@/lib/admin-guard';
 import { slugify } from '@/lib/utils';
 
 const qrSchema = z.object({
@@ -60,7 +60,10 @@ export async function PATCH(req) {
   const data = { label, active, destination: destination || '/jeu', expiresAt: expiresAt ? new Date(expiresAt) : null };
   if (slug) data.slug = slugify(slug);
   const res = await db.qrCode.updateMany({ where: { id, companyId: companyScope(guard) }, data }).catch(() => null);
-  if (!res || res.count === 0) return NextResponse.json({ error: 'QR code introuvable.' }, { status: 404 });
+  if (!res || res.count === 0) {
+    if (await db.qrCode.findUnique({ where: { id } })) await logCrossAttempt(guard.admin.id, 'QrCode', id);
+    return NextResponse.json({ error: 'QR code introuvable.' }, { status: 404 });
+  }
   await logAction(guard.admin.id, 'qr.update', 'QrCode', id);
   return NextResponse.json({ ok: true });
 }
@@ -70,7 +73,10 @@ export async function DELETE(req) {
   if (guard.error) return guard.error;
   const id = new URL(req.url).searchParams.get('id');
   const res = await db.qrCode.deleteMany({ where: { id, companyId: companyScope(guard) } }).catch(() => null);
-  if (!res || res.count === 0) return NextResponse.json({ error: 'QR code introuvable.' }, { status: 404 });
+  if (!res || res.count === 0) {
+    if (await db.qrCode.findUnique({ where: { id } })) await logCrossAttempt(guard.admin.id, 'QrCode', id);
+    return NextResponse.json({ error: 'QR code introuvable.' }, { status: 404 });
+  }
   await logAction(guard.admin.id, 'qr.delete', 'QrCode', id);
   return NextResponse.json({ ok: true });
 }

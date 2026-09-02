@@ -17,6 +17,7 @@ export async function POST(req, { params }) {
     email: guard.admin.email,
     role: 'COMPANY_ADMIN',
     companyId: company.id,
+    companySlug: company.slug,
     impersonatedBy: guard.admin.id,
   });
   await logAction(guard.admin.id, 'company.impersonate', 'Company', id);

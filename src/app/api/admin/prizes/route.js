@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { requirePermission, companyScope, logAction } from '@/lib/admin-guard';
+import { requirePermission, companyScope, logAction, logCrossAttempt } from '@/lib/admin-guard';
 
 const prizeSchema = z.object({
   label: z.string().trim().min(1).max(80),
@@ -40,7 +40,10 @@ export async function PATCH(req) {
   if (!parsed.success) return NextResponse.json({ error: 'Lot invalide.' }, { status: 400 });
   const { id, ...data } = parsed.data;
   const prize = await db.prize.updateMany({ where: { id, companyId: companyScope(guard) }, data }).catch(() => null);
-  if (!prize || prize.count === 0) return NextResponse.json({ error: 'Lot introuvable.' }, { status: 404 });
+  if (!prize || prize.count === 0) {
+    if (await db.prize.findUnique({ where: { id } })) await logCrossAttempt(guard.admin.id, 'Prize', id);
+    return NextResponse.json({ error: 'Lot introuvable.' }, { status: 404 });
+  }
   await logAction(guard.admin.id, 'prize.update', 'Prize', id);
   return NextResponse.json({ ok: true });
 }
@@ -52,6 +55,7 @@ export async function DELETE(req) {
   // deleteMany garantit l'isolation : on ne peut supprimer que dans sa propre entreprise
   const res = await db.prize.deleteMany({ where: { id, companyId: companyScope(guard) } }).catch(() => null);
   if (!res || res.count === 0) {
+    if (await db.prize.findUnique({ where: { id } })) await logCrossAttempt(guard.admin.id, 'Prize', id);
     return NextResponse.json({ error: 'Lot introuvable ou déjà joué (désactivez-le plutôt).' }, { status: 400 });
   }
   await logAction(guard.admin.id, 'prize.delete', 'Prize', id);

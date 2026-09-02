@@ -73,7 +73,19 @@ export default function SuperAdminPage() {
 
   async function impersonate(c) {
     const res = await fetch(`/api/super/companies/${c.id}/impersonate`, { method: 'POST' });
-    if (res.ok) window.location.href = '/admin';
+    if (res.ok) window.location.href = `/${c.slug}`;
+  }
+
+  async function toggle2fa(c) {
+    const label = c.twoFactorEnabled
+      ? `Désactiver la 2FA pour toute l'entreprise « ${c.name} » ? (utile au support)`
+      : `Réactiver la 2FA pour « ${c.name} » ?`;
+    if (!window.confirm(label)) return;
+    await fetch(`/api/super/companies/${c.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ twoFactorEnabled: !c.twoFactorEnabled }),
+    });
+    load();
   }
 
   async function showTotp(c) {
@@ -186,6 +198,13 @@ export default function SuperAdminPage() {
                 <td className="p-3">{c.counts.customers}</td>
                 <td className="p-3">{c.counts.spins}</td>
                 <td className="p-3">
+                  <button onClick={() => toggle2fa(c)}
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${c.twoFactorEnabled ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}
+                    title="Forcer la désactivation / réactivation de la 2FA pour cette entreprise">
+                    {c.twoFactorEnabled ? '● activée' : '○ désactivée'}
+                  </button>
+                </td>
+                <td className="p-3">
                   <button onClick={() => showTotp(c)}
                     className={`rounded-lg border px-2 py-1 text-xs hover:bg-gray-800 ${c.totpConfigured ? 'border-emerald-800 text-emerald-400' : 'border-gray-700 text-gray-400'}`}>
                     {c.totpConfigured ? '🔳 QR' : '＋ Générer'}
@@ -206,7 +225,7 @@ export default function SuperAdminPage() {
               </tr>
             ))}
             {companies.length === 0 && (
-              <tr><td colSpan={9} className="p-6 text-center text-gray-500">Aucune entreprise. Créez la première ci-dessus.</td></tr>
+              <tr><td colSpan={10} className="p-6 text-center text-gray-500">Aucune entreprise. Créez la première ci-dessus.</td></tr>
             )}
           </tbody>
         </table>

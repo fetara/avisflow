@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { requirePermission, companyScope, logAction } from '@/lib/admin-guard';
+import { requirePermission, companyScope, logAction, logCrossAttempt } from '@/lib/admin-guard';
 
 const actionSchema = z.object({
   id: z.string(),
@@ -56,7 +56,10 @@ export async function PATCH(req) {
   const owned = await db.review.findFirst({
     where: { id, customer: { companyId: companyScope(guard) } },
   });
-  if (!owned) return NextResponse.json({ error: 'Avis introuvable.' }, { status: 404 });
+  if (!owned) {
+    if (await db.review.findUnique({ where: { id } })) await logCrossAttempt(guard.admin.id, 'Review', id);
+    return NextResponse.json({ error: 'Avis introuvable.' }, { status: 404 });
+  }
 
   const data = { moderatedBy: guard.admin.id, moderatedAt: new Date() };
   if (action === 'approve') data.status = 'approved';

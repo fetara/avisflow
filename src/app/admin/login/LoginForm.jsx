@@ -13,7 +13,11 @@ export default function LoginForm() {
     params.get('err') === 'validation' ? 'Lien de validation invalide ou expiré.' : ''
   );
   const [info, setInfo] = useState(
-    params.get('ok') === 'validated' ? 'Compte validé ! Vous pouvez vous connecter.' : ''
+    params.get('ok') === 'validated'
+      ? 'Compte validé ! Vous pouvez vous connecter.'
+      : params.get('ok') === 'created'
+        ? '🎉 Entreprise créée ! Connectez-vous pour configurer votre roue.'
+        : ''
   );
 
   async function submit(e) {
@@ -50,7 +54,9 @@ export default function LoginForm() {
         return;
       }
       if (!res.ok) throw new Error(data.error || 'Erreur de connexion');
-      router.push(data.role === 'SUPER_ADMIN' ? '/super' : '/admin');
+      // Après connexion : super admin -> /super, entreprise -> son slug (ou ?next=slug)
+      const dest = data.role === 'SUPER_ADMIN' ? '/super' : `/${data.companySlug || params.get('next') || ''}`;
+      router.push(dest.endsWith('//') || dest === '/' ? '/' : dest);
       router.refresh();
     } catch (e2) {
       setError(e2.message);

@@ -21,6 +21,7 @@ model Admin {
   permissions     String    @default("[]")
   emailVerifiedAt DateTime?
   totpSecret      String?
+  twoFactorEnabled Boolean  @default(true)
   loginSessions   LoginSession[]
   emailTokens     EmailToken[]
   moderatedReviews Review[] @relation("Moderator")
@@ -34,6 +35,8 @@ model Company {
   name      String
   slug      String   @unique
   active    Boolean  @default(true)
+  // 2FA imposée au niveau entreprise (false = 2FA ignorée pour tous ses admins)
+  twoFactorEnabled Boolean @default(true)
   admins    Admin[]
   qrCodes   QrCode[]
   prizes    Prize[]

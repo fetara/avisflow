@@ -1,8 +1,11 @@
 'use client';
 
+import { useParams } from 'next/navigation';
+
 import { useCallback, useEffect, useState } from 'react';
 
 export default function ClientsPage() {
+  const { companySlug } = useParams();
   const [customers, setCustomers] = useState([]);
   const [sources, setSources] = useState([]);
   const [q, setQ] = useState('');
@@ -10,16 +13,16 @@ export default function ClientsPage() {
 
   const load = useCallback(async () => {
     const qs = new URLSearchParams({ ...(q && { q }), ...(source && { source }) });
-    const res = await fetch(`/api/admin/customers?${qs}`);
+    const res = await fetch(`/api/${companySlug}/customers?${qs}`);
     if (res.ok) setCustomers((await res.json()).customers || []);
   }, [q, source]);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { fetch('/api/admin/qrcodes').then((r) => r.json()).then((d) => setSources(d.qrs || [])); }, []);
+  useEffect(() => { fetch(`/api/${companySlug}/qrcodes`).then((r) => r.json()).then((d) => setSources(d.qrs || [])); }, []);
 
   async function gdprDelete(c) {
     if (!confirm(`Droit à l'oubli RGPD : anonymiser définitivement ${c.firstName} ${c.lastName} (${c.email}) ?\nSes avis et parties seront supprimés.`)) return;
-    await fetch(`/api/admin/customers?id=${c.id}`, { method: 'DELETE' });
+    await fetch(`/api/${companySlug}/customers?id=${c.id}`, { method: 'DELETE' });
     load();
   }
 
@@ -27,7 +30,7 @@ export default function ClientsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Clients <span className="text-base font-normal text-gray-400">({customers.length})</span></h1>
-        <a href={`/api/admin/customers?format=csv${q ? `&q=${encodeURIComponent(q)}` : ''}${source ? `&source=${source}` : ''}`}
+        <a href={`/api/${companySlug}/customers?format=csv${q ? `&q=${encodeURIComponent(q)}` : ''}${source ? `&source=${source}` : ''}`}
           className="btn-secondary !py-2">⬇ Export CSV</a>
       </div>
 

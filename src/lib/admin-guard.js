@@ -54,3 +54,11 @@ export function companyScope(ctx) {
 export async function logAction(adminId, action, entity, entityId = null) {
   await db.auditLog.create({ data: { adminId, action, entity, entityId } }).catch(() => {});
 }
+
+// Alertes de sécurité : ressource EXISTS mais hors du périmètre de l'admin connecté.
+// Journalisée pour détection des tentatives d'accès cross-entreprise.
+export async function logCrossAttempt(adminId, entity, entityId) {
+  await db.auditLog.create({
+    data: { adminId, action: 'security.cross_company_denied', entity, entityId },
+  }).catch(() => {});
+}

@@ -15,6 +15,7 @@ export async function POST() {
     email: admin.email,
     role: admin.role || 'SUPER_ADMIN',
     companyId: admin.companyId || null,
+    companySlug: null,
   });
   const res = NextResponse.json({ ok: true });
   res.cookies.set(ADMIN_COOKIE_NAME, jwt, adminCookieOptions());

@@ -1,15 +1,18 @@
 'use client';
 
+import { useParams } from 'next/navigation';
+
 import { useCallback, useEffect, useState } from 'react';
 
 export default function QrCodesPage() {
+  const { companySlug } = useParams();
   const [qrs, setQrs] = useState([]);
   const [form, setForm] = useState({ label: '', slug: '', destination: '/jeu', expiresAt: '' });
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(null); // { id, label, slug, destination, expiresAt }
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/admin/qrcodes');
+    const res = await fetch(`/api/${companySlug}/qrcodes`);
     if (res.ok) setQrs((await res.json()).qrs || []);
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -17,7 +20,7 @@ export default function QrCodesPage() {
   async function create(e) {
     e.preventDefault();
     setError('');
-    const res = await fetch('/api/admin/qrcodes', {
+    const res = await fetch(`/api/${companySlug}/qrcodes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, active: true, expiresAt: form.expiresAt || null }),
@@ -29,7 +32,7 @@ export default function QrCodesPage() {
   }
 
   async function toggle(qr) {
-    await fetch('/api/admin/qrcodes', {
+    await fetch(`/api/${companySlug}/qrcodes`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: qr.id, label: qr.label, slug: qr.slug, destination: qr.destination, active: !qr.active, expiresAt: qr.expiresAt }),
@@ -39,7 +42,7 @@ export default function QrCodesPage() {
 
   async function saveEdit(e) {
     e.preventDefault();
-    await fetch('/api/admin/qrcodes', {
+    await fetch(`/api/${companySlug}/qrcodes`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...editing, active: editing.active ?? true, expiresAt: editing.expiresAt || null }),
@@ -50,7 +53,7 @@ export default function QrCodesPage() {
 
   async function remove(qr) {
     if (!confirm(`Supprimer le QR code « ${qr.label} » ? Les statistiques associées seront perdues.`)) return;
-    await fetch(`/api/admin/qrcodes?id=${qr.id}`, { method: 'DELETE' });
+    await fetch(`/api/${companySlug}/qrcodes?id=${qr.id}`, { method: 'DELETE' });
     load();
   }
 
@@ -116,11 +119,11 @@ export default function QrCodesPage() {
                 </button>
                 <button onClick={() => setEditing({ ...qr, expiresAt: qr.expiresAt ? qr.expiresAt.slice(0, 10) : '' })}
                   className="rounded-lg bg-blue-50 px-3 py-1.5 font-medium text-blue-700 hover:bg-blue-100">Éditer</button>
-                <a href={`/api/admin/qrcodes/${qr.id}/visual?format=png`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">PNG</a>
-                <a href={`/api/admin/qrcodes/${qr.id}/visual?format=svg&logo=1`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">SVG</a>
-                <a href={`/api/admin/qrcodes/${qr.id}/visual?format=pdf&poster=comptoir&text=${encodeURIComponent('Scannez ce code et tentez de gagner un cadeau !')}`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">PDF comptoir</a>
-                <a href={`/api/admin/qrcodes/${qr.id}/visual?format=pdf&poster=tenture`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">PDF tenture</a>
-                <a href={`/api/admin/qrcodes/${qr.id}/visual?format=pdf&poster=sticker`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">PDF sticker</a>
+                <a href={`/api/${companySlug}/qrcodes/${qr.id}/visual?format=png`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">PNG</a>
+                <a href={`/api/${companySlug}/qrcodes/${qr.id}/visual?format=svg&logo=1`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">SVG</a>
+                <a href={`/api/${companySlug}/qrcodes/${qr.id}/visual?format=pdf&poster=comptoir&text=${encodeURIComponent('Scannez ce code et tentez de gagner un cadeau !')}`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">PDF comptoir</a>
+                <a href={`/api/${companySlug}/qrcodes/${qr.id}/visual?format=pdf&poster=tenture`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">PDF tenture</a>
+                <a href={`/api/${companySlug}/qrcodes/${qr.id}/visual?format=pdf&poster=sticker`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">PDF sticker</a>
                 <button onClick={() => remove(qr)} className="rounded-lg bg-red-50 px-3 py-1.5 font-medium text-red-700 hover:bg-red-100">Suppr.</button>
               </div>
             </div>
