@@ -130,6 +130,8 @@ export default function ReglagesPage() {
         </div>
         <div className="flex items-center gap-3">
           <button className="btn-primary !py-2">Enregistrer l'apparence</button>
+          {saved && <span className="text-sm text-emerald-600">✓ Enregistré</span>}
+          {error && <span className="text-sm text-red-600">{error}</span>}
         </div>
       </form>
 

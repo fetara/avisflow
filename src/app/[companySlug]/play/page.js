@@ -21,7 +21,7 @@ function NotReady({ companyName }) {
   );
 }
 
-export default async function PlayPage({ params }) {
+export default async function PlayPage({ params, searchParams }) {
   const { companySlug } = await params;
 
   const company = await db.company.findUnique({ where: { slug: companySlug } });
@@ -70,7 +70,8 @@ export default async function PlayPage({ params }) {
       wheelBg = cs.WHEEL_BG_IMAGE || null;
     } catch { /* couleurs invalides -> palette par défaut */ }
 
-    return <GameFlow initial={initial} src={company.slug} err=""
+    return <GameFlow initial={initial}
+      src={searchParams?.src || ''} companySlug={company.slug} err=""
       companyName={company.name} headline={headline} sub={sub}
       wheelColors={wheelColors} wheelBg={wheelBg} />;
   } catch (e) {

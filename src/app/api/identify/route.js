@@ -13,6 +13,7 @@ const schema = z.object({
   phone: z.string().trim().max(20).optional().or(z.literal('')),
   consent: z.literal(true),
   sourceSlug: z.string().max(60).optional().or(z.literal('')),
+  companySlug: z.string().max(80).optional().or(z.literal('')),
 });
 
 // Étape 1 : identification du client + envoi de l'e-mail de validation.
@@ -26,9 +27,10 @@ export async function POST(req) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Formulaire invalide (consentement RGPD obligatoire).' }, { status: 400 });
   }
-  const { firstName, lastName, email, phone, consent, sourceSlug } = parsed.data;
+  const { firstName, lastName, email, phone, consent, sourceSlug, companySlug } = parsed.data;
 
-  // QR source éventuel -> détermine l'entreprise du jeu
+  // Entreprise du jeu : résolue depuis le QR scanné, sinon depuis le slug d'entreprise
+  // de l'URL de jeu (/{slug}/play). Un joueur peut ainsi participer chez plusieurs commerces.
   let sourceQrId = null;
   let companyId = null;
   if (sourceSlug) {
@@ -37,6 +39,10 @@ export async function POST(req) {
       sourceQrId = qr.id;
       companyId = qr.companyId || null;
     }
+  }
+  if (!companyId && companySlug) {
+    const company = await db.company.findUnique({ where: { slug: companySlug }, select: { id: true } });
+    companyId = company?.id ?? null;
   }
 
   // Un seul tour par e-mail ET PAR ENTREPRISE : déjà validé chez ce commerçant ?

@@ -8,7 +8,7 @@ function Stars({ n }) {
   return <span className="text-amber-400">{'★'.repeat(n)}<span className="text-gray-300">{'★'.repeat(5 - n)}</span></span>;
 }
 
-export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null }) {
+export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null, companySlug = null }) {
   const searchParams = useSearchParams();
   const [step, setStep] = useState(initial.step || 'identify');
   const [spin, setSpin] = useState(initial.spin);
@@ -28,7 +28,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
       const res = await fetch('/api/identify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, sourceSlug: src || searchParams.get('src') || '' }),
+        body: JSON.stringify({ ...form, sourceSlug: src || searchParams.get('src') || '', companySlug: companySlug || '' }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur');

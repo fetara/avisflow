@@ -39,9 +39,13 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Compte non validé : vérifiez vos e-mails.' }, { status: 403 });
   }
 
-  // 2FA - TOTP, effective seulement si activée sur l'utilisateur ET l'entreprise
+  // 2FA : si un secret TOTP existe, elle n'est exigée que si activée sur l'utilisateur
+  // ET l'entreprise (une désactivation par le super admin la supprime entièrement,
+  // y compris le repli par code e-mail). Sans secret TOTP -> 2FA e-mail historique.
   const company = admin.companyId ? await db.company.findUnique({ where: { id: admin.companyId } }) : null;
-  const twoFactorActive = Boolean(admin.totpSecret) && admin.twoFactorEnabled !== false && company?.twoFactorEnabled !== false;
+  const twoFactorActive = admin.totpSecret
+    ? (admin.twoFactorEnabled !== false && company?.twoFactorEnabled !== false)
+    : true;
   if (twoFactorActive) {
     if (!totp) return NextResponse.json({ twoFactor: 'totp' }, { status: 401 });
     if (!authenticator.verify({ token: totp, secret: admin.totpSecret })) {
