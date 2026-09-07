@@ -3,12 +3,14 @@
 import { useParams } from 'next/navigation';
 
 import { useEffect, useState } from 'react';
+import WheelPreview from '@/components/WheelPreview';
 
 export default function ReglagesPage() {
   const { companySlug } = useParams();
   const [settings, setSettings] = useState(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [previewPrizes, setPreviewPrizes] = useState(null); // null = pas encore chargé
   const [tfa, setTfa] = useState(null);
   const [tfaForm, setTfaForm] = useState({ password: '', totp: '' });
   const [tfaMsg, setTfaMsg] = useState('');
@@ -16,6 +18,11 @@ export default function ReglagesPage() {
   useEffect(() => {
     fetch(`/api/${companySlug}/settings`).then((r) => r.json()).then((d) => setSettings(d.settings || {})).catch(() => setError('Chargement impossible'));
     fetch(`/api/${companySlug}/twofa`).then((r) => r.json()).then(setTfa).catch(() => {});
+    // Lots réels pour l'aperçu de la roue (repli sur des libellés de démo si non autorisé)
+    fetch(`/api/${companySlug}/prizes`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => setPreviewPrizes((d.prizes || []).map((p) => ({ label: p.label }))))
+      .catch(() => setPreviewPrizes([{ label: 'Bon d'achat' }, { label: 'Rejouez' }, { label: 'Café offert' }, { label: 'Réduction' }]));
   }, [companySlug]);
 
   async function toggle2fa(action) {
@@ -86,9 +93,11 @@ export default function ReglagesPage() {
           {error && <span className="text-sm text-red-600">{error}</span>}
         </div>
       </form>
-      {/* Apparence de la roue : couleurs des segments + image de fond */}
+      {/* Apparence de la roue : couleurs des segments + image de fond + aperçu en direct */}
       <form onSubmit={save} className="card space-y-4">
         <h2 className="font-bold">Apparence de la roue</h2>
+        <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
+        <div className="space-y-4">
         <div>
           <label className="label">Couleurs des segments (alterne sur la roue)</label>
           <div className="flex flex-wrap items-center gap-2">
@@ -132,6 +141,16 @@ export default function ReglagesPage() {
           <button className="btn-primary !py-2">Enregistrer l'apparence</button>
           {saved && <span className="text-sm text-emerald-600">✓ Enregistré</span>}
           {error && <span className="text-sm text-red-600">{error}</span>}
+        </div>
+        </div>
+        {/* Aperçu en direct : se met à jour à chaque changement de couleur/fond */}
+        <div className="justify-self-center rounded-2xl bg-gray-50 p-4">
+          <WheelPreview
+            prizes={previewPrizes || [{ label: 'Lot 1' }, { label: 'Lot 2' }, { label: 'Lot 3' }, { label: 'Lot 4' }]}
+            colors={wheelColors.length ? wheelColors : null}
+            bgImage={wheelBg || null}
+          />
+        </div>
         </div>
       </form>
 

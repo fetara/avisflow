@@ -23,6 +23,9 @@ export default async function SuperAdminLayout({ children }) {
           <Link href="/super/audit" className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-300 transition hover:bg-gray-800 hover:text-white">
             📜 Journal d'audit
           </Link>
+          <Link href="/super/email" className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-300 transition hover:bg-gray-800 hover:text-white">
+            ✉️ E-mails
+          </Link>
           <form action="/api/admin/logout" method="post" className="ml-auto">
             <button className="rounded-lg px-3 py-1.5 text-sm text-gray-400 hover:bg-red-500/10 hover:text-red-400">
               Déconnexion

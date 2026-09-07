@@ -1,45 +1,68 @@
 import nodemailer from 'nodemailer';
+import { getSetting } from '@/lib/db';
 
-const FROM = process.env.MAIL_FROM || 'Avis & Roue <onboarding@resend.dev>';
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
+// Configuration e-mail : lue en priorité depuis la table Setting (modifiable dans
+// l'écran super admin), avec repli sur les variables d'environnement d'origine.
+async function cfg(key, envVar, fallback = '') {
+  const fromDb = await getSetting(key, null);
+  if (fromDb !== null && fromDb !== '') return fromDb;
+  return process.env[envVar] || fallback;
+}
+
+async function mailConfig() {
+  const [resendKey, smtpHost, smtpPort, smtpUser, smtpPass, from, demo] = await Promise.all([
+    cfg('MAIL_RESEND_API_KEY', 'RESEND_API_KEY'),
+    cfg('MAIL_SMTP_HOST', 'SMTP_HOST'),
+    cfg('MAIL_SMTP_PORT', 'SMTP_PORT', '587'),
+    cfg('MAIL_SMTP_USER', 'SMTP_USER'),
+    cfg('MAIL_SMTP_PASS', 'SMTP_PASS'),
+    cfg('MAIL_FROM', 'MAIL_FROM', 'Avis & Roue <onboarding@resend.dev>'),
+    cfg('MAIL_DEMO_MODE', 'DEMO_MODE'),
+  ]);
+  return { resendKey, smtpHost, smtpPort, smtpUser, smtpPass, from, demo };
+}
+
 // Transport : Resend (HTTP) si clé présente, sinon SMTP (Brevo), sinon mode démo (log console).
-async function sendViaResend(to, subject, html) {
+async function sendViaResend(cfg, to, subject, html) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      Authorization: `Bearer ${cfg.resendKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from: FROM, to, subject, html }),
+    body: JSON.stringify({ from: cfg.from, to, subject, html }),
   });
   if (!res.ok) throw new Error(`Resend: ${await res.text()}`);
 }
 
-function smtpTransport() {
+function smtpTransport(cfg) {
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: Number(process.env.SMTP_PORT) === 465,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    host: cfg.smtpHost,
+    port: Number(cfg.smtpPort || 587),
+    secure: Number(cfg.smtpPort) === 465,
+    auth: { user: cfg.smtpUser, pass: cfg.smtpPass },
   });
 }
 
 export async function sendMail(to, subject, html) {
-  if (process.env.DEMO_MODE === 'true' || (!process.env.RESEND_API_KEY && !process.env.SMTP_HOST)) {
+  const c = await mailConfig();
+  const demo = c.demo === 'true' || (!c.resendKey && !c.smtpHost);
+  if (demo) {
     console.log(`[DEMO MAIL] to=${to} subject=${subject}`);
     return;
   }
   try {
-    if (process.env.RESEND_API_KEY) {
-      await sendViaResend(to, subject, html);
+    if (c.resendKey) {
+      await sendViaResend(c, to, subject, html);
     } else {
-      await smtpTransport().sendMail({ from: FROM, to, subject, html });
+      await smtpTransport(c).sendMail({ from: c.from, to, subject, html });
     }
   } catch (err) {
     // Fallback croisé Resend -> SMTP
-    if (process.env.RESEND_API_KEY && process.env.SMTP_HOST) {
-      await smtpTransport().sendMail({ from: FROM, to, subject, html });
+    if (c.resendKey && c.smtpHost) {
+      await smtpTransport(c).sendMail({ from: c.from, to, subject, html });
     } else {
       throw err;
     }
