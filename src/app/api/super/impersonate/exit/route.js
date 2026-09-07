@@ -17,7 +17,9 @@ export async function POST() {
     companyId: admin.companyId || null,
     companySlug: null,
   });
-  const res = NextResponse.json({ ok: true });
+
+  // Utilisé depuis un <form method="post"> : redirection HTML vers /super (le cookie part avec la réponse)
+  const res = NextResponse.redirect(new URL('/super', req.url), 303);
   res.cookies.set(ADMIN_COOKIE_NAME, jwt, adminCookieOptions());
   return res;
 }

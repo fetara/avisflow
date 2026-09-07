@@ -21,7 +21,8 @@ export default function LotsPage() {
   }, [companySlug]);
   useEffect(() => { load(); }, [load]);
 
-  const totalWeight = prizes.filter((p) => p.active).reduce((s, p) => s + p.weight, 0) || 1;
+  // prizes est null pendant le chargement : on ne calcule que lorsqu'il est rempli
+  const totalWeight = (prizes || []).filter((p) => p.active).reduce((s, p) => s + p.weight, 0) || 1;
 
   async function update(p, patch) {
     setPrizes((cur) => cur.map((x) => (x.id === p.id ? { ...x, ...patch } : x)));

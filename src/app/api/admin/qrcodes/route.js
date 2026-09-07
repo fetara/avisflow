@@ -23,6 +23,21 @@ export async function GET(req) {
   return NextResponse.json({ qrs });
 }
 
+// Destination par défaut d'un QR : la page joueur DE l'entreprise (/{slug}/play).
+// Pour un super admin hors entreprise, repli sur l'entreprise du QR manipulé ou /.
+async function defaultDestination(req, companyId = null) {
+  let cid = companyId;
+  if (cid == null) {
+    const guard = await requirePermission(req, 'manage_qrcodes');
+    cid = guard.error ? null : guard.companyId;
+  }
+  if (cid) {
+    const company = await db.company.findUnique({ where: { id: cid }, select: { slug: true } });
+    if (company?.slug) return `/${company.slug}/play`;
+  }
+  return '/';
+}
+
 export async function POST(req) {
   const guard = await requirePermission(req, 'manage_qrcodes');
   if (guard.error) return guard.error;
@@ -31,6 +46,7 @@ export async function POST(req) {
   const { label, slug, destination, active, expiresAt } = parsed.data;
 
   const finalSlug = slugify(slug || label);
+  const dest = destination || (await defaultDestination(req, guard.companyId));
   const exists = await db.qrCode.findUnique({ where: { slug: finalSlug } });
   if (exists) return NextResponse.json({ error: `Le slug "${finalSlug}" est déjà utilisé.` }, { status: 409 });
 
@@ -38,7 +54,7 @@ export async function POST(req) {
     data: {
       label,
       slug: finalSlug,
-      destination: destination || '/jeu',
+      destination: dest,
       active,
       expiresAt: expiresAt ? new Date(expiresAt) : null,
       createdBy: guard.admin.id,
@@ -57,7 +73,8 @@ export async function PATCH(req) {
   if (!parsed.success) return NextResponse.json({ error: 'QR code invalide.' }, { status: 400 });
   const { id, label, slug, destination, active, expiresAt } = parsed.data;
 
-  const data = { label, active, destination: destination || '/jeu', expiresAt: expiresAt ? new Date(expiresAt) : null };
+  const existing = await db.qrCode.findFirst({ where: { id, companyId: companyScope(guard) } });
+  const data = { label, active, destination: destination || (await defaultDestination(req, existing?.companyId ?? guard.companyId)), expiresAt: expiresAt ? new Date(expiresAt) : null };
   if (slug) data.slug = slugify(slug);
   const res = await db.qrCode.updateMany({ where: { id, companyId: companyScope(guard) }, data }).catch(() => null);
   if (!res || res.count === 0) {
