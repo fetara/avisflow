@@ -30,7 +30,7 @@ export async function PATCH(req, { params }) {
 
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Données invalides.' }, { status: 400 });
-  const { name, active, permissions, adminPassword, newAdminEmail, newAdminPassword } = parsed.data;
+  const { name, active, permissions, adminPassword, newAdminEmail, newAdminPassword, twoFactorEnabled } = parsed.data;
 
   if (name) await db.company.update({ where: { id }, data: { name } });
   if (typeof active === 'boolean') await db.company.update({ where: { id }, data: { active } });

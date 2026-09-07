@@ -9,6 +9,7 @@ const prizeSchema = z.object({
   stock: z.number().int().min(0).nullable(),
   active: z.boolean(),
   sortOrder: z.number().int().min(0),
+  photo: z.string().max(3_000_000).nullable().optional(), // data URL de l'illustration
 });
 
 export async function GET(req) {

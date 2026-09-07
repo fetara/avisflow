@@ -45,10 +45,14 @@ export async function middleware(req) {
   }
   // Le super admin passe pour tous les slugs (sélection ou impersonation).
 
-  // Réécriture transparente vers les handlers existants scopés par session
+  // Réécriture transparente vers les handlers existants scopés par session.
+  // Le slug voyage dans un header : permet aux handlers (ex. réglages) de résoudre
+  // l'entreprise visitée quand c'est le SUPER ADMIN qui navigue dans un espace.
+  const headers = new Headers(req.headers);
+  headers.set('x-company-slug', slug);
   const url = req.nextUrl.clone();
   url.pathname = `/api/admin/${rest}`;
-  return NextResponse.rewrite(url);
+  return NextResponse.rewrite(url, { request: { headers } });
 }
 
 export const config = {

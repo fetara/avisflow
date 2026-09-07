@@ -125,6 +125,7 @@ model Prize {
   stock     Int?     // null = illimité
   active    Boolean  @default(true)
   sortOrder Int      @default(0)
+  photo     String?  // data URL de l'illustration du lot (affichée au joueur)
   spins     Spin[]
   createdAt DateTime @default(now())
 }

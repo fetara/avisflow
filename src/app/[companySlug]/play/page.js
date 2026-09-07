@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { db, getCompanySetting } from '@/lib/db';
+import { db, getCompanySetting, getCompanySettings } from '@/lib/db';
 import { getPlayerSession } from '@/lib/auth';
 import GameFlow from '@/components/GameFlow';
 
@@ -50,7 +50,7 @@ export default async function PlayPage({ params }) {
         const review = await db.review.findFirst({ where: { customerId: customer.id } });
         initial = {
           step: spin ? (review ? 'done' : 'review') : 'wheel',
-          spin: spin ? { label: spin.prize.label, giftCode: spin.giftCode } : null,
+          spin: spin ? { label: spin.prize.label, giftCode: spin.giftCode, photo: spin.prize.photo || null } : null,
           reviewDone: Boolean(review),
           prizes,
           email: customer.email,
@@ -61,8 +61,18 @@ export default async function PlayPage({ params }) {
     const headline = await getCompanySetting(company.id, 'GAME_HEADLINE', null);
     const sub = await getCompanySetting(company.id, 'GAME_SUB', null);
 
+    // Apparence de la roue personnalisée par l'entreprise
+    let wheelColors = null;
+    let wheelBg = null;
+    try {
+      const cs = await getCompanySettings(company.id);
+      wheelColors = JSON.parse(cs.WHEEL_COLORS || 'null');
+      wheelBg = cs.WHEEL_BG_IMAGE || null;
+    } catch { /* couleurs invalides -> palette par défaut */ }
+
     return <GameFlow initial={initial} src={company.slug} err=""
-      companyName={company.name} headline={headline} sub={sub} />;
+      companyName={company.name} headline={headline} sub={sub}
+      wheelColors={wheelColors} wheelBg={wheelBg} />;
   } catch (e) {
     return <NotReady companyName={company.name} />;
   }

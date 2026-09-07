@@ -46,6 +46,22 @@ export default function ReglagesPage() {
 
   if (!settings) return <p className="text-gray-400">Chargement…</p>;
 
+  // ---------- Apparence de la roue ----------
+  let wheelColors = [];
+  try { wheelColors = JSON.parse(settings.WHEEL_COLORS || '[]'); } catch { wheelColors = []; }
+  const wheelBg = settings.WHEEL_BG_IMAGE || '';
+
+  function setWheelColors(list) {
+    setSettings({ ...settings, WHEEL_COLORS: JSON.stringify(list) });
+  }
+  function onBgPick(file) {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { setError('Image de fond trop lourde (max 2 Mo).'); return; }
+    const reader = new FileReader();
+    reader.onload = () => setSettings({ ...settings, WHEEL_BG_IMAGE: reader.result });
+    reader.readAsDataURL(file);
+  }
+
   const FIELDS = [
     ['GAME_HEADLINE', "Accroche de la page d'accueil"],
     ['GAME_SUB', 'Sous-titre de la page d\'accueil'],
@@ -70,6 +86,53 @@ export default function ReglagesPage() {
           {error && <span className="text-sm text-red-600">{error}</span>}
         </div>
       </form>
+      {/* Apparence de la roue : couleurs des segments + image de fond */}
+      <form onSubmit={save} className="card space-y-4">
+        <h2 className="font-bold">Apparence de la roue</h2>
+        <div>
+          <label className="label">Couleurs des segments (alterne sur la roue)</label>
+          <div className="flex flex-wrap items-center gap-2">
+            {(wheelColors.length ? wheelColors : ['']).map((c, i) => (
+              <div key={i} className="flex items-center gap-1">
+                <input type="color" aria-label={`Couleur ${i + 1}`}
+                  value={/^#[0-9a-fA-F]{6}$/.test(c) ? c : '#f472b6'}
+                  onChange={(e) => setWheelColors(wheelColors.map((x, j) => (j === i ? e.target.value : x)))} />
+                {wheelColors.length > 0 && (
+                  <button type="button" aria-label="Retirer cette couleur"
+                    onClick={() => setWheelColors(wheelColors.filter((_, j) => j !== i))}
+                    className="text-xs text-red-500 hover:underline">✕</button>
+                )}
+              </div>
+            ))}
+            <button type="button" onClick={() => setWheelColors([...wheelColors, '#f472b6'])}
+              className="rounded-lg border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">+ Couleur</button>
+          </div>
+          <p className="mt-1 text-xs text-gray-400">Astuce : 2 à 5 couleurs qui alternent rendent la roue plus lisible. Vide = palette par défaut.</p>
+        </div>
+        <div>
+          <label className="label">Image de fond de la roue (affichée sous les segments)</label>
+          <div className="flex items-center gap-3">
+            {wheelBg
+              ? // eslint-disable-next-line @next/next/no-img-element
+                <img src={wheelBg} alt="Aperçu du fond" className="h-16 w-16 rounded-xl object-cover" />
+              : <span className="flex h-16 w-16 items-center justify-center rounded-xl bg-gray-100 text-2xl">🖼️</span>}
+            <label className="cursor-pointer rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
+              {wheelBg ? 'Changer l’image' : 'Choisir une image'}
+              <input type="file" accept="image/*" className="hidden"
+                onChange={(e) => { onBgPick(e.target.files?.[0]); e.target.value = ''; }} />
+            </label>
+            {wheelBg && (
+              <button type="button" onClick={() => setSettings({ ...settings, WHEEL_BG_IMAGE: '' })}
+                className="text-sm text-red-500 hover:underline">Retirer</button>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-gray-400">JPG/PNG, 2 Mo max. Un voile clair est appliqué pour garder les textes lisibles.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button className="btn-primary !py-2">Enregistrer l'apparence</button>
+        </div>
+      </form>
+
       <div className="card !p-4 text-sm text-gray-600">
         <p className="font-semibold">Rappel jeu conforme :</p>
         <p className="mt-1">Le règlement du jeu (gratuit, sans achat, probabilités) est automatiquement alimenté par vos lots : <a href={`/reglement-jeu?src=${companySlug}`} className="text-brand-600 hover:underline" target="_blank">/reglement-jeu</a>.</p>

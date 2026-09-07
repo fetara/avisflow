@@ -55,10 +55,10 @@ export async function POST(req) {
     const spin2 = await db.spin.create({
       data: { customerId: customer.id, prizeId: fallback.id, giftCode: giftCode() },
     });
-    return NextResponse.json({ prizeId: fallback.id, label: fallback.label, giftCode: spin2.giftCode, spinId: spin2.id });
+    return NextResponse.json({ prizeId: fallback.id, label: fallback.label, photo: fallback.photo || null, giftCode: spin2.giftCode, spinId: spin2.id });
   }
 
-  return NextResponse.json({ prizeId: prize.id, label: prize.label, giftCode: spin.giftCode, spinId: spin.id });
+  return NextResponse.json({ prizeId: prize.id, label: prize.label, photo: prize.photo || null, giftCode: spin.giftCode, spinId: spin.id });
 }
 
 // Segments pour dessiner la roue (avant tirage)

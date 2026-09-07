@@ -8,7 +8,7 @@ function Stars({ n }) {
   return <span className="text-amber-400">{'★'.repeat(n)}<span className="text-gray-300">{'★'.repeat(5 - n)}</span></span>;
 }
 
-export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null }) {
+export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null }) {
   const searchParams = useSearchParams();
   const [step, setStep] = useState(initial.step || 'identify');
   const [spin, setSpin] = useState(initial.spin);
@@ -47,7 +47,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
 
   function onLaunch(data) {
     setWinnerId(data.prizeId);
-    setSpin({ label: data.label, giftCode: data.giftCode });
+    setSpin({ label: data.label, giftCode: data.giftCode, photo: data.photo || null });
   }
 
   function onWheelDone() {
@@ -166,7 +166,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
       {step === 'wheel' && (
         <div className="card">
           <h2 className="mb-6 text-center text-lg font-bold">Tentez votre chance !</h2>
-          <Wheel prizes={initial.prizes} onLaunch={onLaunch} onDone={onWheelDone} />
+          <Wheel prizes={initial.prizes} onLaunch={onLaunch} onDone={onWheelDone} colors={wheelColors} bgImage={wheelBg} />
           <p className="mt-4 text-center text-sm text-gray-500">Cliquez pour lancer — le tirage au sort est effectué instantanément côté serveur.</p>
         </div>
       )}
@@ -178,6 +178,10 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
           <h2 className="text-xl font-bold">Félicitations !</h2>
           <p className="mt-2 text-gray-600">Vous avez gagné :</p>
           <p className="mt-1 text-2xl font-extrabold text-brand-700">{spin.label}</p>
+          {spin.photo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={spin.photo} alt={spin.label} className="mx-auto mt-3 h-40 w-40 rounded-2xl object-cover shadow-md" />
+          )}
           <div className="mx-auto mt-5 max-w-xs rounded-xl border-2 border-dashed border-brand-300 bg-brand-50 p-4">
             <p className="text-xs uppercase tracking-wide text-gray-500">Votre code cadeau</p>
             <p className="mt-1 font-mono text-xl font-bold tracking-widest">{spin.giftCode}</p>

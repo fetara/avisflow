@@ -35,9 +35,19 @@ export default function LotsPage() {
         stock: patch.stock === '' || patch.stock === null ? null : Number(patch.stock),
         active: patch.active ?? p.active,
         sortOrder: p.sortOrder,
+        photo: patch.photo !== undefined ? patch.photo : (p.photo || null),
       }),
     });
     load();
+  }
+
+  // Upload d'illustration : convertit le fichier en data URL (max 2 Mo) puis PATCH
+  function onPhotoPick(p, file) {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { show('Image trop lourde (max 2 Mo).', 'error'); return; }
+    const reader = new FileReader();
+    reader.onload = () => update(p, { photo: reader.result });
+    reader.readAsDataURL(file);
   }
 
   async function add(e) {
@@ -87,13 +97,29 @@ export default function LotsPage() {
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 text-xs uppercase text-gray-500">
             <tr>
-              <th className="p-3">Lot</th><th className="p-3">Poids</th><th className="p-3">Probabilité</th>
+              <th className="p-3">Photo</th><th className="p-3">Lot</th><th className="p-3">Poids</th><th className="p-3">Probabilité</th>
               <th className="p-3">Stock</th><th className="p-3">Distribués</th><th className="p-3">Actif</th><th className="p-3"></th>
             </tr>
           </thead>
           <tbody>
             {prizes.map((p) => (
               <tr key={p.id} className="border-t">
+                <td className="p-3">
+                  <div className="flex items-center gap-2">
+                    {p.photo
+                      ? // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.photo} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                      : <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-lg">🖼️</span>}
+                    <label className="cursor-pointer rounded-lg border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">
+                      {p.photo ? 'Changer' : 'Ajouter'}
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={(e) => { onPhotoPick(p, e.target.files?.[0]); e.target.value = ''; }} />
+                    </label>
+                    {p.photo && (
+                      <button onClick={() => update(p, { photo: null })} className="text-xs text-red-500 hover:underline">✕</button>
+                    )}
+                  </div>
+                </td>
                 <td className="p-3">
                   <input className="input !py-1.5 !w-56" defaultValue={p.label}
                     onBlur={(e) => e.target.value !== p.label && update(p, { label: e.target.value })} />
