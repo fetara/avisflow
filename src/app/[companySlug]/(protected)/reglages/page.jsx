@@ -22,7 +22,7 @@ export default function ReglagesPage() {
     fetch(`/api/${companySlug}/prizes`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d) => setPreviewPrizes((d.prizes || []).map((p) => ({ label: p.label }))))
-      .catch(() => setPreviewPrizes([{ label: 'Bon d'achat' }, { label: 'Rejouez' }, { label: 'Café offert' }, { label: 'Réduction' }]));
+      .catch(() => setPreviewPrizes([{ label: 'Bon d’achat' }, { label: 'Rejouez' }, { label: 'Café offert' }, { label: 'Réduction' }]));
   }, [companySlug]);
 
   async function toggle2fa(action) {
