@@ -34,7 +34,7 @@ Application web complète pour un commerce local : récolte d'avis clients en bo
 - QR désactivé/expiré → page « Opération terminée » propre (pas d'erreur)
 - Rate limiting anti-bot sur les scans (30 scans / 5 min / IP)
 - Entonnoir de conversion par QR : scans → inscrits → validés → parties → avis → clics Google
-
+ 
 ### Backoffice (authentification forte)
 - Inscription avec validation d'e-mail (token hashé SHA-256, expiration 24h)
 - Connexion : bcrypt (12 rounds) + **2FA** (TOTP ou code à 6 chiffres par e-mail)
