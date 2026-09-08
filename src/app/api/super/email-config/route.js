@@ -11,6 +11,7 @@ import { mailConfig as mailCfg } from '@/lib/mailer';
 
 // Champs modifiables. SECRET : masqué en lecture (on ne renvoie jamais la valeur).
 const FIELDS = [
+  { key: 'MAIL_PROVIDER', label: 'Fournisseur (auto = détection, ou forcer resend / smtp)', secret: false },
   { key: 'MAIL_RESEND_API_KEY', label: 'Clé API Resend', secret: true },
   { key: 'MAIL_SMTP_HOST', label: 'Hôte SMTP', secret: false },
   { key: 'MAIL_SMTP_PORT', label: 'Port SMTP (587 ou 465)', secret: false },
@@ -36,6 +37,7 @@ export async function GET(req) {
   const stored = Object.fromEntries(rows.map((r) => [r.key, r.value]));
 
   const envFallback = {
+    MAIL_PROVIDER: 'auto',
     MAIL_RESEND_API_KEY: process.env.RESEND_API_KEY,
     MAIL_SMTP_HOST: process.env.SMTP_HOST,
     MAIL_SMTP_PORT: process.env.SMTP_PORT,

@@ -12,7 +12,8 @@ async function cfg(key, envVar, fallback = '') {
 }
 
 export async function mailConfig() {
-  const [resendKey, smtpHost, smtpPort, smtpUser, smtpPass, from, demo] = await Promise.all([
+  const [provider, resendKey, smtpHost, smtpPort, smtpUser, smtpPass, from, demo] = await Promise.all([
+    cfg('MAIL_PROVIDER', 'MAIL_PROVIDER', 'auto'),
     cfg('MAIL_RESEND_API_KEY', 'RESEND_API_KEY'),
     cfg('MAIL_SMTP_HOST', 'SMTP_HOST'),
     cfg('MAIL_SMTP_PORT', 'SMTP_PORT', '587'),
@@ -21,10 +22,15 @@ export async function mailConfig() {
     cfg('MAIL_FROM', 'MAIL_FROM', 'Avis & Roue <onboarding@resend.dev>'),
     cfg('MAIL_DEMO_MODE', 'DEMO_MODE'),
   ]);
-  return {
+  const c = {
+    provider: provider.trim().toLowerCase(),
     resendKey: resendKey.trim(), smtpHost: smtpHost.trim(), smtpPort: String(smtpPort).trim(),
     smtpUser: smtpUser.trim(), smtpPass: smtpPass.trim(), from: from.trim(), demo,
   };
+  // Sélection du transport : le choix explicite (MAIL_PROVIDER) prime sur la détection auto.
+  if (c.provider === 'smtp') c.resendKey = '';
+  if (c.provider === 'resend') c.smtpHost = '';
+  return c;
 }
 
 // Transport : Resend (HTTP) si clé présente, sinon SMTP (Brevo), sinon mode démo (log console).
@@ -66,8 +72,8 @@ export async function sendMail(to, subject, html) {
     const info = await smtpTransport(c).sendMail({ from: c.from, to, subject, html });
     return { transport: 'smtp', messageId: info.messageId, response: info.response };
   } catch (err) {
-    // Fallback croisé Resend -> SMTP
-    if (c.resendKey && c.smtpHost) {
+    // Fallback croisé Resend -> SMTP (uniquement en sélection auto avec les deux configurés)
+    if ((!c.provider || c.provider === 'auto') && c.resendKey && c.smtpHost) {
       const info = await smtpTransport(c).sendMail({ from: c.from, to, subject, html });
       return { transport: 'smtp (fallback Resend)', messageId: info.messageId, response: info.response };
     }
