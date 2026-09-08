@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import NavBar from '@/components/NavBar';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export const metadata = { title: 'Roue de la Chance — Transformez vos clients en ambassadeurs' };
 
@@ -64,21 +66,22 @@ function Section({ children, className = '', id }) {
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* ---------- Header ---------- */}
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-          <span className="text-xl font-extrabold text-brand-700">🎡 Roue de la Chance</span>
-          <nav className="ml-auto flex items-center gap-2 text-sm" aria-label="Navigation principale">
-            <a href="#fonctionnalites" className="hidden rounded-lg px-3 py-2 text-gray-600 hover:bg-brand-50 sm:block">Fonctionnalités</a>
-            <a href="#etapes" className="hidden rounded-lg px-3 py-2 text-gray-600 hover:bg-brand-50 sm:block">Comment ça marche</a>
-            <a href="#faq" className="hidden rounded-lg px-3 py-2 text-gray-600 hover:bg-brand-50 sm:block">FAQ</a>
-            <Link href="/admin/login" className="rounded-lg px-3 py-2 font-medium text-gray-700 hover:bg-brand-50">Se connecter</Link>
-            <Link href="/inscription" className="rounded-xl bg-brand-600 px-4 py-2 font-semibold text-white shadow-md transition hover:bg-brand-700">
-              Créer mon entreprise
-            </Link>
-          </nav>
-        </div>
-      </header>
+      {/* ---------- Header (responsive : burger mobile) ---------- */}
+      <NavBar
+        brand="🎡 Roue de la Chance"
+        items={[
+          { href: '#fonctionnalites', label: 'Fonctionnalités' },
+          { href: '#etapes', label: 'Comment ça marche' },
+          { href: '#faq', label: 'FAQ' },
+        ]}
+        actions={
+          <>
+            <ThemeToggle />
+            <Link href="/admin/login" className="rounded-lg px-3 py-2.5 font-medium text-gray-700 hover:bg-brand-50 dark:text-gray-200 dark:hover:bg-gray-800">Se connecter</Link>
+            <Link href="/inscription" className="rounded-xl bg-brand-600 px-4 py-2.5 font-semibold text-white shadow-md transition hover:bg-brand-700">Créer mon entreprise</Link>
+          </>
+        }
+      />
 
       {/* ---------- Hero ---------- */}
       <Section className="grid items-center gap-10 lg:grid-cols-2 !pt-20">

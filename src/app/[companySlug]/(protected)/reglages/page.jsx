@@ -58,8 +58,21 @@ export default function ReglagesPage() {
   try { wheelColors = JSON.parse(settings.WHEEL_COLORS || '[]'); } catch { wheelColors = []; }
   const wheelBg = settings.WHEEL_BG_IMAGE || '';
 
+  // lecture avec valeur par défaut (clés booléennes : activées si absentes)
+  const val = (key, def = '') => (settings[key] !== undefined && settings[key] !== '' ? settings[key] : def);
+  const flag = (key) => val(key, 'true') === 'true';
+  function setFlag(key, checked) {
+    setSettings({ ...settings, [key]: checked ? 'true' : 'false' });
+  }
   function setWheelColors(list) {
     setSettings({ ...settings, WHEEL_COLORS: JSON.stringify(list) });
+  }
+  function onLogoPick(file) {
+    if (!file) return;
+    if (file.size > 1.5 * 1024 * 1024) { setError('Logo trop lourd (max 1,5 Mo).'); return; }
+    const reader = new FileReader();
+    reader.onload = () => setSettings({ ...settings, BRAND_LOGO: reader.result });
+    reader.readAsDataURL(file);
   }
   function onBgPick(file) {
     if (!file) return;
@@ -77,22 +90,8 @@ export default function ReglagesPage() {
   ];
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="space-y-6">
       <h1 className="text-2xl font-bold">Réglages</h1>
-      <form onSubmit={save} className="card space-y-4">
-        {FIELDS.map(([key, label]) => (
-          <div key={key}>
-            <label className="label">{label}</label>
-            <input className="input" value={settings[key] || ''} onChange={(e) => setSettings({ ...settings, [key]: e.target.value })} />
-            {key === 'AUTO_APPROVE_MIN_RATING' && <p className="mt-1 text-xs text-gray-400">Ex. 4 → les avis de 4 et 5 étoiles sont publiés automatiquement.</p>}
-          </div>
-        ))}
-        <div className="flex items-center gap-3">
-          <button className="btn-primary !py-2">Enregistrer</button>
-          {saved && <span className="text-sm text-emerald-600">✓ Enregistré</span>}
-          {error && <span className="text-sm text-red-600">{error}</span>}
-        </div>
-      </form>
       {/* Apparence de la roue : couleurs des segments + image de fond + aperçu en direct */}
       <form onSubmit={save} className="card space-y-4">
         <h2 className="font-bold">Apparence de la roue</h2>
@@ -153,6 +152,104 @@ export default function ReglagesPage() {
         </div>
         </div>
       </form>
+
+
+      <form onSubmit={save} className="card space-y-4">
+        {FIELDS.map(([key, label]) => (
+          <div key={key}>
+            <label className="label">{label}</label>
+            <input className="input" value={settings[key] || ''} onChange={(e) => setSettings({ ...settings, [key]: e.target.value })} />
+            {key === 'AUTO_APPROVE_MIN_RATING' && <p className="mt-1 text-xs text-gray-400">Ex. 4 → les avis de 4 et 5 étoiles sont publiés automatiquement.</p>}
+          </div>
+        ))}
+        <div className="flex items-center gap-3">
+          <button className="btn-primary !py-2">Enregistrer</button>
+          {saved && <span className="text-sm text-emerald-600">✓ Enregistré</span>}
+          {error && <span className="text-sm text-red-600">{error}</span>}
+        </div>
+      </form>
+      {/* Formulaire joueurs + anti-abus + campagne */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <form onSubmit={save} className="card space-y-4">
+          <h2 className="font-bold">Formulaire joueurs & participation</h2>
+          {[
+            ['FORM_FIRSTNAME', 'Demander le prénom'],
+            ['FORM_LASTNAME', 'Demander le nom'],
+            ['FORM_PHONE', 'Demander le téléphone (optionnel)'],
+          ].map(([key, label]) => (
+            <label key={key} className="flex items-center gap-3 text-sm">
+              <input type="checkbox" className="h-4 w-4 accent-brand-600" checked={flag(key)} onChange={(e) => setFlag(key, e.target.checked)} />
+              {label}
+            </label>
+          ))}
+          <div>
+            <label className="label">Texte de consentement RGPD personnalisé (vide = texte par défaut)</label>
+            <textarea className="input min-h-20" maxLength={400} value={val('FORM_RGPD_TEXT')}
+              onChange={(e) => setSettings({ ...settings, FORM_RGPD_TEXT: e.target.value })} />
+          </div>
+          <div>
+            <label className="label" htmlFor="limitmode">Limite anti-abus</label>
+            <select id="limitmode" className="input" value={val('SPIN_LIMIT_MODE', 'lifetime')}
+              onChange={(e) => setSettings({ ...settings, SPIN_LIMIT_MODE: e.target.value })}>
+              <option value="lifetime">1 participation par e-mail (à vie)</option>
+              <option value="daily">1 participation par e-mail et par jour</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label" htmlFor="cstart">Début de campagne</label>
+              <input id="cstart" type="date" className="input" value={val('CAMPAIGN_START')}
+                onChange={(e) => setSettings({ ...settings, CAMPAIGN_START: e.target.value })} />
+            </div>
+            <div>
+              <label className="label" htmlFor="cend">Fin de campagne</label>
+              <input id="cend" type="date" className="input" value={val('CAMPAIGN_END')}
+                onChange={(e) => setSettings({ ...settings, CAMPAIGN_END: e.target.value })} />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="btn-primary !py-2">Enregistrer</button>
+            {saved && <span className="text-sm text-emerald-600">✓ Enregistré</span>}
+          </div>
+        </form>
+
+        <form onSubmit={save} className="card space-y-4">
+          <h2 className="font-bold">Branding (page de jeu)</h2>
+          <div>
+            <label className="label">Logo (affiché au-dessus du titre)</label>
+            <div className="flex items-center gap-3">
+              {val('BRAND_LOGO')
+                ? // eslint-disable-next-line @next/next/no-img-element
+                  <img src={val('BRAND_LOGO')} alt="Logo" className="h-14 w-auto max-w-[160px] rounded-lg border object-contain p-1" />
+                : <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-gray-100 text-2xl">🏷️</span>}
+              <label className="cursor-pointer rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
+                {val('BRAND_LOGO') ? 'Changer' : 'Choisir un logo'}
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={(e) => { onLogoPick(e.target.files?.[0]); e.target.value = ''; }} />
+              </label>
+              {val('BRAND_LOGO') && (
+                <button type="button" onClick={() => setSettings({ ...settings, BRAND_LOGO: '' })}
+                  className="text-sm text-red-500 hover:underline">Retirer</button>
+              )}
+            </div>
+          </div>
+          <div>
+            <label className="label" htmlFor="brandcolor">Couleur principale (roue, boutons)</label>
+            <div className="flex items-center gap-2">
+              <input id="brandcolor" type="color" value={/^#[0-9a-fA-F]{6}$/.test(val('BRAND_COLOR')) ? val('BRAND_COLOR') : '#db2777'}
+                onChange={(e) => setSettings({ ...settings, BRAND_COLOR: e.target.value })} />
+              <input className="input !w-32" placeholder="#db2777" value={val('BRAND_COLOR')}
+                onChange={(e) => setSettings({ ...settings, BRAND_COLOR: e.target.value })} />
+              <button type="button" onClick={() => setSettings({ ...settings, BRAND_COLOR: '' })}
+                className="text-xs text-gray-500 hover:underline">Défaut</button>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="btn-primary !py-2">Enregistrer</button>
+            {saved && <span className="text-sm text-emerald-600">✓ Enregistré</span>}
+          </div>
+        </form>
+      </div>
 
       <div className="card !p-4 text-sm text-gray-600">
         <p className="font-semibold">Rappel jeu conforme :</p>

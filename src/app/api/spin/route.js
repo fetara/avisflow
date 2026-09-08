@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { giftCode } from '@/lib/utils';
 import { getPlayerSession } from '@/lib/auth';
+import { getCompanySetting } from '@/lib/db';
 
 function weightedPick(prizes) {
   const pool = prizes.filter((p) => p.active && (p.stock === null || p.stock > 0));
@@ -25,7 +26,11 @@ export async function POST(req) {
   const customer = await db.customer.findUnique({ where: { id: session.sub } });
   if (!customer) return NextResponse.json({ error: 'Client introuvable.' }, { status: 404 });
 
-  const already = await db.spin.findFirst({ where: { customerId: customer.id } });
+  // Anti-abus : 1 participation à vie (par défaut) ou 1 par jour, selon la config entreprise
+  const limitMode = await getCompanySetting(customer.companyId, 'SPIN_LIMIT_MODE', 'lifetime');
+  const spinWhere = { customerId: customer.id };
+  if (limitMode === 'daily') spinWhere.createdAt = { gte: new Date(new Date().setHours(0, 0, 0, 0)) };
+  const already = await db.spin.findFirst({ where: spinWhere });
   if (already) {
     return NextResponse.json({ error: 'Vous avez déjà joué.', already: true, prizeId: already.prizeId }, { status: 409 });
   }

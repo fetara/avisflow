@@ -5,10 +5,13 @@ import { sendCustomerValidation } from '@/lib/mailer';
 import { randomToken, sha256 } from '@/lib/utils';
 import { rateLimit } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/utils';
+import { getCompanySettings } from '@/lib/db';
 
+// Prénom/nom/téléphone sont rendus optionnels AU NIVEAU ZOD : c'est la configuration
+// de l'entreprise (FORM_* dans CompanySetting) qui impose ou non les champs côté serveur.
 const schema = z.object({
-  firstName: z.string().trim().min(1).max(60),
-  lastName: z.string().trim().min(1).max(60),
+  firstName: z.string().trim().max(60).optional().or(z.literal('')),
+  lastName: z.string().trim().max(60).optional().or(z.literal('')),
   email: z.string().email().max(120).toLowerCase(),
   phone: z.string().trim().max(20).optional().or(z.literal('')),
   consent: z.literal(true),
@@ -45,6 +48,14 @@ export async function POST(req) {
     companyId = company?.id ?? null;
   }
 
+  // Champs requis = uniquement ceux activés par l'entreprise (prénom & nom activés par défaut)
+  const cs = await getCompanySettings(companyId);
+  const needFirst = cs.FORM_FIRSTNAME !== 'false';
+  const needLast = cs.FORM_LASTNAME !== 'false';
+  if ((needFirst && !firstName) || (needLast && !lastName)) {
+    return NextResponse.json({ error: 'Formulaire incomplet.' }, { status: 400 });
+  }
+
   // Un seul tour par e-mail ET PAR ENTREPRISE : déjà validé chez ce commerçant ?
   const existing = await db.customer.findFirst({ where: { email, companyId } });
   if (existing?.emailVerifiedAt) {
@@ -59,7 +70,7 @@ export async function POST(req) {
       tokenHash: sha256(token),
       type: 'CUSTOMER_VERIFY',
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
-      payload: JSON.stringify({ firstName, lastName, email, phone: phone || null, consentAt: new Date().toISOString(), sourceQrId, companyId }),
+      payload: JSON.stringify({ firstName, lastName, email, phone: phone || null, consentAt: new Date().toISOString(), sourceQrId, companyId, firstName: firstName || '', lastName: lastName || '' }),
     },
   });
 

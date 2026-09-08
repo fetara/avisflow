@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { getAdminSession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { parsePermissions, ROLES } from '@/lib/permissions';
+import NavBar from '@/components/NavBar';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +13,7 @@ const NAV = [
   { href: '', label: 'Tableau de bord', icon: '📊', perm: null },
   { href: '/avis', label: 'Avis', icon: '⭐', perm: 'moderate_reviews' },
   { href: '/clients', label: 'Clients', icon: '👥', perm: 'view_customers' },
+  { href: '/gagnants', label: 'Gagnants', icon: '🏆', perm: 'view_customers' },
   { href: '/lots', label: 'Lots', icon: '🎁', perm: 'manage_prizes' },
   { href: '/qr-codes', label: 'QR codes', icon: '📱', perm: 'manage_qrcodes' },
   { href: '/reglages', label: 'Réglages', icon: '⚙️', perm: 'configure_wheel' },
@@ -85,30 +88,21 @@ export default async function ProtectedCompanyLayout({ children, params }) {
           </form>
         </div>
       )}
-      <nav className="bg-white shadow-sm">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-1 gap-y-1 px-4 py-3">
-          <span className="mr-4 font-bold text-brand-700">
-            🎡 {company.name}
-            {isSuper && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-700">vue super admin</span>}
-          </span>
-          {NAV.filter((item) => allowed(item.perm)).map((item) => (
-            <Link key={item.href} href={`${base}${item.href}`}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-brand-50 hover:text-brand-700">
-              {item.icon} {item.label}
-            </Link>
-          ))}
-          {isSuper && (
-            <Link href="/super" className="rounded-lg px-3 py-1.5 text-sm font-semibold text-amber-600 transition hover:bg-amber-50">
-              🛡️ Espace super admin
-            </Link>
-          )}
-          <form action="/api/admin/logout" method="post" className="ml-auto">
-            <button className="rounded-lg px-3 py-1.5 text-sm text-gray-500 hover:bg-red-50 hover:text-red-600">
-              Déconnexion
-            </button>
-          </form>
-        </div>
-      </nav>
+      <NavBar
+        brand={`🎡 ${company.name}${isSuper ? ' · vue super admin' : ''}`}
+        items={NAV.filter((item) => allowed(item.perm)).map((item) => ({ href: `${base}${item.href}`, label: item.label, icon: item.icon }))}
+        actions={
+          <>
+            {isSuper && (
+              <Link href="/super" className="rounded-lg px-3 py-2.5 text-sm font-semibold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10">🛡️ Super admin</Link>
+            )}
+            <ThemeToggle />
+            <form action="/api/admin/logout" method="post">
+              <button className="rounded-lg px-3 py-2.5 text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:text-gray-400">Déconnexion</button>
+            </form>
+          </>
+        }
+      />
       <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
     </div>
   );

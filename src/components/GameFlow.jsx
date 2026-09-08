@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Wheel from '@/components/Wheel';
+import Confetti from '@/components/Confetti';
 
 function Stars({ n }) {
   return <span className="text-amber-400">{'★'.repeat(n)}<span className="text-gray-300">{'★'.repeat(5 - n)}</span></span>;
@@ -20,6 +21,24 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
   const [review, setReview] = useState({ rating: 5, comment: '', photo: null, photoName: '' });
   const [reviewSent, setReviewSent] = useState(false);
   const [googleUrl, setGoogleUrl] = useState(searchParams.get('g') || '');
+  const [soundOn, setSoundOn] = useState(false); // désactivé par défaut (ambiance boutique)
+
+  // Petite mélodie de victoire via WebAudio (uniquement si activée)
+  function playWinSound() {
+    if (!soundOn) return;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [523, 659, 784, 1047].forEach((freq, i) => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.frequency.value = freq; o.type = 'sine';
+        g.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.12);
+        g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + i * 0.12 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.12 + 0.35);
+        o.connect(g).connect(ctx.destination);
+        o.start(ctx.currentTime + i * 0.12); o.stop(ctx.currentTime + i * 0.12 + 0.4);
+      });
+    } catch { /* audio indisponible */ }
+  }
 
   async function submitIdentify(e) {
     e.preventDefault();
@@ -52,6 +71,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
 
   function onWheelDone() {
     setStep('result');
+    playWinSound();
   }
 
   function onPhotoChange(e) {
@@ -92,7 +112,10 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
   return (
     <main className="mx-auto min-h-screen max-w-lg px-4 py-8">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-3xl shadow-lg">🎡</div>
+        {brand.logo
+          ? // eslint-disable-next-line @next/next/no-img-element
+            <img src={brand.logo} alt={companyName || 'Logo'} className="mx-auto mb-3 h-16 w-auto max-w-[180px] object-contain" />
+          : <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-3xl shadow-lg">🎡</div>}
         <h1 className="text-2xl font-extrabold">{headline || 'Scannez, jouez, gagnez !'}</h1>
         {companyName
           ? <p className="mt-1 text-sm font-semibold text-brand-600">Organisé par {companyName}</p>
@@ -111,34 +134,40 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
             {companyName ? `Un e-mail de confirmation vous sera envoyé pour débloquer la roue de ${companyName}.` : 'Un e-mail de confirmation vous sera envoyé pour débloquer le jeu.'}
           </p>
           <div className="mt-4 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="label" htmlFor="firstName">Prénom *</label>
-                <input id="firstName" className="input" required maxLength={60} value={form.firstName}
-                  onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
-              </div>
-              <div>
-                <label className="label" htmlFor="lastName">Nom *</label>
-                <input id="lastName" className="input" required maxLength={60} value={form.lastName}
-                  onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
-              </div>
+            <div className={`grid gap-3 ${formCfg.firstName && formCfg.lastName ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {formCfg.firstName && (
+                <div>
+                  <label className="label" htmlFor="firstName">Prénom *</label>
+                  <input id="firstName" className="input" autoComplete="given-name" required maxLength={60} value={form.firstName}
+                    onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+                </div>
+              )}
+              {formCfg.lastName && (
+                <div>
+                  <label className="label" htmlFor="lastName">Nom *</label>
+                  <input id="lastName" className="input" autoComplete="family-name" required maxLength={60} value={form.lastName}
+                    onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+                </div>
+              )}
             </div>
             <div>
               <label className="label" htmlFor="email">E-mail *</label>
-              <input id="email" type="email" className="input" required maxLength={120} value={form.email}
+              <input id="email" type="email" className="input" autoComplete="email" required maxLength={120} value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
-            <div>
-              <label className="label" htmlFor="phone">Téléphone (optionnel)</label>
-              <input id="phone" type="tel" className="input" maxLength={20} value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-            </div>
+            {formCfg.phone && (
+              <div>
+                <label className="label" htmlFor="phone">Téléphone (optionnel)</label>
+                <input id="phone" type="tel" className="input" autoComplete="tel" maxLength={20} value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              </div>
+            )}
             <label className="flex items-start gap-3 text-sm text-gray-600">
               <input type="checkbox" required className="mt-1 h-4 w-4 accent-pink-600" checked={form.consent}
                 onChange={(e) => setForm({ ...form, consent: e.target.checked })} />
               <span>
-                J&apos;accepte que mes données soient utilisées pour cette opération, conformément à la
-                politique de confidentialité. Consentement obligatoire pour participer.
+                {formCfg.rgpdText || 'J’accepte que mes données soient utilisées pour cette opération, conformément à la politique de confidentialité.'}{' '}
+                Consentement obligatoire pour participer.
               </span>
             </label>
             <button type="submit" disabled={loading} className="btn-primary w-full">
@@ -166,28 +195,33 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
       {step === 'wheel' && (
         <div className="card">
           <h2 className="mb-6 text-center text-lg font-bold">Tentez votre chance !</h2>
-          <Wheel prizes={initial.prizes} onLaunch={onLaunch} onDone={onWheelDone} colors={wheelColors} bgImage={wheelBg} />
+          <Wheel prizes={initial.prizes} onLaunch={onLaunch} onDone={onWheelDone} colors={wheelColors} bgImage={wheelBg} accent={brand.color || '#db2777'} />
           <p className="mt-4 text-center text-sm text-gray-500">Cliquez pour lancer — le tirage au sort est effectué instantanément côté serveur.</p>
         </div>
       )}
 
-      {/* Étape 3 : résultat */}
+      {/* Étape 3 : résultat — overlay plein écran + confettis */}
       {step === 'result' && spin && (
-        <div className="card text-center">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-amber-100 text-5xl">🎁</div>
-          <h2 className="text-xl font-bold">Félicitations !</h2>
-          <p className="mt-2 text-gray-600">Vous avez gagné :</p>
-          <p className="mt-1 text-2xl font-extrabold text-brand-700">{spin.label}</p>
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto bg-white px-4 py-8 text-center dark:bg-gray-950">
+          <Confetti />
+          <button onClick={() => setSoundOn(!soundOn)} aria-label={soundOn ? 'Couper le son' : 'Activer le son'}
+            className="absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-xl hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800">
+            {soundOn ? '🔊' : '🔇'}
+          </button>
+          <div className="animate-bounce text-7xl" aria-hidden="true">🎉</div>
+          <h2 className="mt-3 text-3xl font-extrabold">Félicitations !</h2>
+          <p className="mt-1 text-gray-600">Vous avez gagné :</p>
           {spin.photo && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={spin.photo} alt={spin.label} className="mx-auto mt-3 h-40 w-40 rounded-2xl object-cover shadow-md" />
+            <img src={spin.photo} alt={spin.label} className="mt-4 h-44 w-44 rounded-3xl object-cover shadow-xl" />
           )}
-          <div className="mx-auto mt-5 max-w-xs rounded-xl border-2 border-dashed border-brand-300 bg-brand-50 p-4">
+          <p className="mt-3 text-3xl font-extrabold text-brand-600">{spin.label}</p>
+          <div className="mx-auto mt-5 w-full max-w-xs rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50 p-4">
             <p className="text-xs uppercase tracking-wide text-gray-500">Votre code cadeau</p>
-            <p className="mt-1 font-mono text-xl font-bold tracking-widest">{spin.giftCode}</p>
+            <p className="mt-1 select-all font-mono text-2xl font-bold tracking-widest">{spin.giftCode}</p>
           </div>
-          <p className="mt-3 text-xs text-gray-500">Présentez ce code en caisse pour bénéficier de votre gain.</p>
-          <button onClick={() => setStep('review')} className="btn-primary mt-6 w-full">
+          <p className="mt-3 max-w-xs text-xs text-gray-500">Présentez ce code en caisse pour bénéficier de votre gain.</p>
+          <button onClick={() => setStep('review')} style={brand.color ? { backgroundColor: brand.color } : undefined} className="btn-primary mt-6 w-full max-w-xs">
             Continuer : laissez-nous votre avis
           </button>
         </div>

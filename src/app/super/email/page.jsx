@@ -51,7 +51,11 @@ export default function EmailConfigPage() {
     const data = await res.json().catch(() => ({}));
     setTesting(false);
     if (!res.ok) { show(data.error || 'Échec de l’envoi', 'error'); return; }
-    show(`E-mail de test envoyé à ${testTo}`);
+    if (data.transport === 'demo') {
+      show('⚠️ MODE DÉMO : aucun e-mail réel n’a été envoyé (simulation console). Vérifiez la config ci-dessus.', 'error');
+    } else {
+      show(`E-mail envoyé via ${data.transport} à ${testTo} — vérifiez la boîte (et les spams).`);
+    }
   }
 
   if (!fields) return <p className="text-gray-500">Chargement…</p>;

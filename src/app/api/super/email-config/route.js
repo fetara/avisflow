@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db, getSetting, setSetting } from '@/lib/db';
 import { requireSuperAdmin, logAction } from '@/lib/admin-guard';
 import { sendMail } from '@/lib/mailer';
+import { mailConfig as mailCfg } from '@/lib/mailer';
 
 // Configuration de l'envoi d'e-mails, gérée depuis l'écran super admin.
 // Les valeurs sont stockées dans la table Setting (clés MAIL_*) et priment
@@ -88,15 +89,29 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Adresse e-mail de test invalide.' }, { status: 400 });
   }
 
+  // Pré-vol : détecter les configurations incomplètes avec des messages actionnables
+  const c = await mailCfg();
+  if (c.demo) {
+    return NextResponse.json({ error: 'Mode démo actif : désactivez-le pour envoyer réellement des e-mails.' }, { status: 400 });
+  }
+  if (!c.from || !/@/.test(c.from)) {
+    return NextResponse.json({ error: 'Expéditeur (MAIL_FROM) manquant ou invalide. Avec Brevo, utilisez une adresse validée dans votre compte Brevo (ex : no-reply@votre-domaine.fr).' }, { status: 400 });
+  }
+  if (!c.resendKey && c.smtpHost && (!c.smtpUser || !c.smtpPass)) {
+    return NextResponse.json({ error: 'Identifiants SMTP incomplets : utilisateur et mot de passe sont requis.' }, { status: 400 });
+  }
+
   try {
-    await sendMail(to, '✅ Test de configuration e-mail — Roue de la Chance',
+    const result = await sendMail(to, '✅ Test de configuration e-mail — Roue de la Chance',
       `<div style="font-family:sans-serif;max-width:560px;margin:auto;padding:24px">
         <h2 style="color:#db2777">Ça marche !</h2>
-        <p>Cet e-mail de test confirme que votre configuration d'envoi est opérationnelle.</p>
+        <p>Cet e-mail de test (envoyé depuis ${c.from}) confirme que votre configuration d'envoi est opérationnelle.</p>
       </div>`);
     await logAction(guard.admin.id, 'email_config.test', 'Setting', to);
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, transport: result?.transport || '?', detail: result || null });
   } catch (e) {
-    return NextResponse.json({ error: `Échec de l'envoi : ${String(e.message).slice(0, 200)}` }, { status: 502 });
+    // Inclure la réponse complète du serveur SMTP (Brevo) pour un diagnostic direct
+    const detail = [e.message, e.response, e.responseCode].filter(Boolean).join(' | ');
+    return NextResponse.json({ error: `Échec de l'envoi : ${String(detail).slice(0, 400)}` }, { status: 502 });
   }
 }

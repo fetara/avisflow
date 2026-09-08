@@ -41,3 +41,16 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-wheel { animation: none; }
 }
+
+/* ---------- Mode sombre : bascule par classe sur <html> (voir ThemeToggle) ---------- */
+.dark body { @apply bg-gray-950 text-gray-100; }
+.dark .card { @apply border border-gray-800; background-color: #111827; }
+.dark .input { @apply border-gray-700; background-color: #0b1220; color: #f3f4f6; }
+.dark nav.bg-white, .dark header.bg-white\/90 { background-color: #0b1220 !important; }
+.dark footer.bg-gray-50, .dark .bg-gray-50 { background-color: #0b1220; }
+.dark .bg-white { background-color: #111827; }
+.dark .text-gray-900, .dark .text-gray-800, .dark .text-gray-700 { color: #e5e7eb; }
+.dark .text-gray-600, .dark .text-gray-500 { color: #9ca3af; }
+.dark .border-gray-200, .dark .border-gray-100 { border-color: #1f2937; }
+.dark .bg-gray-100 { background-color: #0b1220; }
+.dark .text-brand-700 { color: #f9a8d4; }

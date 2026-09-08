@@ -11,7 +11,7 @@ async function cfg(key, envVar, fallback = '') {
   return process.env[envVar] || fallback;
 }
 
-async function mailConfig() {
+export async function mailConfig() {
   const [resendKey, smtpHost, smtpPort, smtpUser, smtpPass, from, demo] = await Promise.all([
     cfg('MAIL_RESEND_API_KEY', 'RESEND_API_KEY'),
     cfg('MAIL_SMTP_HOST', 'SMTP_HOST'),
@@ -21,10 +21,14 @@ async function mailConfig() {
     cfg('MAIL_FROM', 'MAIL_FROM', 'Avis & Roue <onboarding@resend.dev>'),
     cfg('MAIL_DEMO_MODE', 'DEMO_MODE'),
   ]);
-  return { resendKey, smtpHost, smtpPort, smtpUser, smtpPass, from, demo };
+  return {
+    resendKey: resendKey.trim(), smtpHost: smtpHost.trim(), smtpPort: String(smtpPort).trim(),
+    smtpUser: smtpUser.trim(), smtpPass: smtpPass.trim(), from: from.trim(), demo,
+  };
 }
 
 // Transport : Resend (HTTP) si clé présente, sinon SMTP (Brevo), sinon mode démo (log console).
+// Renvoie un détail du transport utilisé pour le diagnostic dans l'écran super admin.
 async function sendViaResend(cfg, to, subject, html) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -35,6 +39,8 @@ async function sendViaResend(cfg, to, subject, html) {
     body: JSON.stringify({ from: cfg.from, to, subject, html }),
   });
   if (!res.ok) throw new Error(`Resend: ${await res.text()}`);
+  const json = await res.json().catch(() => ({}));
+  return { transport: 'resend', id: json.id || null };
 }
 
 function smtpTransport(cfg) {
@@ -51,21 +57,21 @@ export async function sendMail(to, subject, html) {
   const demo = c.demo === 'true' || (!c.resendKey && !c.smtpHost);
   if (demo) {
     console.log(`[DEMO MAIL] to=${to} subject=${subject}`);
-    return;
+    return { transport: 'demo' };
   }
   try {
     if (c.resendKey) {
-      await sendViaResend(c, to, subject, html);
-    } else {
-      await smtpTransport(c).sendMail({ from: c.from, to, subject, html });
+      return await sendViaResend(c, to, subject, html);
     }
+    const info = await smtpTransport(c).sendMail({ from: c.from, to, subject, html });
+    return { transport: 'smtp', messageId: info.messageId, response: info.response };
   } catch (err) {
     // Fallback croisé Resend -> SMTP
     if (c.resendKey && c.smtpHost) {
-      await smtpTransport(c).sendMail({ from: c.from, to, subject, html });
-    } else {
-      throw err;
+      const info = await smtpTransport(c).sendMail({ from: c.from, to, subject, html });
+      return { transport: 'smtp (fallback Resend)', messageId: info.messageId, response: info.response };
     }
+    throw err;
   }
 }
 
@@ -107,3 +113,4 @@ export async function sendLoginCode(to, code) {
 }
 
 export { APP_URL };
+

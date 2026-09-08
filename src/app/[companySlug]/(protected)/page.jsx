@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
+import BarChart from '@/components/BarChart';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,8 +15,9 @@ function FunnelCard({ label, value, hint, accent }) {
   );
 }
 
-export default async function Dashboard({ params }) {
+export default async function Dashboard({ params, searchParams }) {
   const { companySlug } = await params;
+  const days = Math.min(90, Math.max(7, parseInt(searchParams?.days || '30', 10)));
   // Isolation multi-entreprise : le super admin voit tout, l'admin entreprise son périmètre
   const session = await getAdminSession();
   const companyId = session?.companyId || null;
@@ -36,6 +38,28 @@ export default async function Dashboard({ params }) {
       db.review.findMany({ where: { customer: { companyId } }, select: { googleClick: true, customer: { select: { sourceQrId: true } } } }),
     ]);
 
+  // Série journalière pour le graphique (derniers N jours)
+  const since = new Date(Date.now() - days * 24 * 3600 * 1000);
+  const [recentSpinRows, recentCustomerRows] = await Promise.all([
+    db.spin.findMany({ where: { customer: { companyId }, createdAt: { gte: since } }, select: { createdAt: true } }),
+    db.customer.findMany({ where: { companyId, createdAt: { gte: since } }, select: { createdAt: true } }),
+  ]);
+  const buckets = [];
+  const idx = {};
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 24 * 3600 * 1000);
+    const key = d.toISOString().slice(0, 10);
+    idx[key] = buckets.length;
+    buckets.push({ label: d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), value: 0 });
+  }
+  for (const r of recentSpinRows) buckets[idx[r.createdAt.toISOString().slice(0, 10)]].value++;
+  const recentSpins = await db.spin.findMany({
+    where: { customer: { companyId } },
+    orderBy: { createdAt: 'desc' },
+    take: 8,
+    include: { prize: { select: { label: true } }, customer: { select: { firstName: true, lastName: true } } },
+  });
+
   const maxRating = Math.max(1, ...ratingDist.map((r) => r._count._all));
   const totalWeight = prizes.filter((p) => p.active).reduce((s, p) => s + p.weight, 0) || 1;
 
@@ -54,6 +78,22 @@ export default async function Dashboard({ params }) {
           <FunnelCard label="Avis déposés" value={reviews} hint={`${spins ? Math.round((reviews / spins) * 100) : 0} % des joueurs`} />
           <FunnelCard label="Clics Google" value={googleClicks} hint="bouton avis Google" />
         </div>
+      </section>
+
+      {/* Graphique : parties jouées par jour + filtre période */}
+      <section className="card">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold text-gray-700">Parties jouées par jour</h2>
+          <div className="flex gap-1 text-xs" role="group" aria-label="Période">
+            {[7, 30, 90].map((d) => (
+              <Link key={d} href={`?days=${d}`}
+                className={`rounded-lg px-2.5 py-1.5 font-semibold ${days === d ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                {d} j
+              </Link>
+            ))}
+          </div>
+        </div>
+        <BarChart data={buckets} ariaLabel={`Parties jouées par jour sur ${days} jours`} />
       </section>
 
       <div className="grid gap-8 lg:grid-cols-2">
@@ -129,6 +169,30 @@ export default async function Dashboard({ params }) {
           </table>
         </div>
         <p className="mt-2 text-xs text-gray-400">Astuce : les inscrits/validés par source sont visibles dans l&apos;onglet Clients (filtre par source).</p>
+      </section>
+
+      {/* Feed : dernières parties jouées */}
+      <section className="card">
+        <h2 className="mb-3 font-semibold">Dernières parties</h2>
+        {recentSpins.length === 0 ? (
+          <p className="text-sm text-gray-400">Aucune partie pour le moment.</p>
+        ) : (
+          <ul className="space-y-1.5 text-sm">
+            {recentSpins.map((sp) => (
+              <li key={sp.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+                <span>
+                  <span className="font-medium">{sp.prize.label}</span>
+                  <span className="ml-2 text-gray-500">
+                    {[sp.customer.firstName, sp.customer.lastName].filter(Boolean).join(' ') || sp.customer.email}
+                  </span>
+                </span>
+                <span className="text-xs text-gray-400">
+                  {new Date(sp.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

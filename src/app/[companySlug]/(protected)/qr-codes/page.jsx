@@ -62,6 +62,10 @@ export default function QrCodesPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">QR codes en boutique</h1>
+      <a href={`/api/${companySlug}/play-qr`} download
+        className="mb-4 inline-block rounded-lg border border-brand-300 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50">
+        ⬇️ QR de la page de jeu (/{companySlug}/play)
+      </a>
       <p className="text-sm text-gray-500">
         QR dynamiques : le code encode <code className="rounded bg-gray-100 px-1">/r/{"{slug}"}</code> —
         changez la destination quand vous voulez sans réimprimer.

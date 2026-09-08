@@ -13,12 +13,21 @@ const ALLOWED_KEYS = [
   'GOOGLE_REVIEW_URL',
   'WHEEL_COLORS',
   'WHEEL_BG_IMAGE',
+  // Formulaire joueurs & anti-abus
+  'FORM_FIRSTNAME', 'FORM_LASTNAME', 'FORM_PHONE', 'FORM_RGPD_TEXT',
+  'SPIN_LIMIT_MODE',
+  // Campagne
+  'CAMPAIGN_START', 'CAMPAIGN_END',
+  // Branding
+  'BRAND_LOGO', 'BRAND_COLOR',
 ];
 
 const VALUE_LIMITS = {
   default: 500,
   WHEEL_COLORS: 4_000, // tableau JSON de couleurs hex
   WHEEL_BG_IMAGE: 3_000_000, // data URL de l'image de fond
+  BRAND_LOGO: 2_000_000, // data URL du logo
+  FORM_RGPD_TEXT: 2_000, // texte de consentement personnalisé
 };
 
 // Entreprise cible des réglages :

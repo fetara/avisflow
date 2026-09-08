@@ -28,7 +28,27 @@ export default async function PlayPage({ params, searchParams }) {
   // Le layout parent gère déjà inexistant / désactivée ; double garde par sécurité
   if (!company || !company.active) return <NotReady companyName={null} />;
 
+  // Campagne hors période ? -> page « revenez du … » (dates posées dans les réglages)
   try {
+    const cs0 = await getCompanySettings(company.id);
+    const now = new Date();
+    const startAt = cs0.CAMPAIGN_START ? new Date(cs0.CAMPAIGN_START) : null;
+    const endAt = cs0.CAMPAIGN_END ? new Date(cs0.CAMPAIGN_END) : null;
+    if ((startAt && now < startAt) || (endAt && now > endAt)) {
+      const dateTxt = startAt && now < startAt
+        ? startAt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+        : null;
+      return (
+        <main className="flex min-h-screen flex-col items-center justify-center bg-gray-100 px-4 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-100 text-3xl">📅</div>
+          <h1 className="text-2xl font-bold">{dateTxt ? `Revenez du ${dateTxt} !` : 'Cette opération est terminée'}</h1>
+          <p className="mt-2 max-w-md text-sm text-gray-500">
+            {companyName ? `La roue de la chance de ${company.name} n'est pas disponible pour le moment.` : 'La roue de la chance n’est pas disponible pour le moment.'}
+          </p>
+        </main>
+      );
+    }
+
     // Roue non configurée (aucun lot actif) -> page dédiée, pas de jeu
     const prizeCount = await db.prize.count({ where: { companyId: company.id, active: true } });
     if (prizeCount === 0) return <NotReady companyName={company.name} />;
@@ -36,7 +56,7 @@ export default async function PlayPage({ params, searchParams }) {
     const prizes = await db.prize.findMany({
       where: { active: true, companyId: company.id },
       orderBy: { sortOrder: 'asc' },
-      select: { id: true, label: true },
+      select: { id: true, label: true, photo: true },
     });
 
     let initial = { step: 'identify', spin: null, reviewDone: false, prizes, email: null, demoToken: null };
@@ -61,19 +81,29 @@ export default async function PlayPage({ params, searchParams }) {
     const headline = await getCompanySetting(company.id, 'GAME_HEADLINE', null);
     const sub = await getCompanySetting(company.id, 'GAME_SUB', null);
 
-    // Apparence de la roue personnalisée par l'entreprise
+    // Apparence + branding + formulaire : toute la config de l'entreprise en un chargement
     let wheelColors = null;
     let wheelBg = null;
+    let brand = { logo: null, color: null };
+    let formCfg = { firstName: true, lastName: true, phone: true, rgpdText: null };
     try {
       const cs = await getCompanySettings(company.id);
       wheelColors = JSON.parse(cs.WHEEL_COLORS || 'null');
       wheelBg = cs.WHEEL_BG_IMAGE || null;
-    } catch { /* couleurs invalides -> palette par défaut */ }
+      brand = { logo: cs.BRAND_LOGO || null, color: cs.BRAND_COLOR || null };
+      formCfg = {
+        firstName: cs.FORM_FIRSTNAME !== 'false',
+        lastName: cs.FORM_LASTNAME !== 'false',
+        phone: cs.FORM_PHONE !== 'false',
+        rgpdText: cs.FORM_RGPD_TEXT || null,
+      };
+    } catch { /* config invalide -> défauts */ }
 
     return <GameFlow initial={initial}
       src={searchParams?.src || ''} companySlug={company.slug} err=""
       companyName={company.name} headline={headline} sub={sub}
-      wheelColors={wheelColors} wheelBg={wheelBg} />;
+      wheelColors={wheelColors} wheelBg={wheelBg}
+      brand={brand} formCfg={formCfg} />;
   } catch (e) {
     return <NotReady companyName={company.name} />;
   }

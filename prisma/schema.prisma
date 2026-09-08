@@ -137,7 +137,12 @@ model Spin {
   prizeId    String
   prize      Prize    @relation(fields: [prizeId], references: [id])
   giftCode   String   @unique
+  // Gestion des gagnants : null = à retirer, sinon remis (par quel admin, quand)
+  redeemedAt DateTime?
+  redeemedBy String?
   createdAt  DateTime @default(now())
+
+  @@index([redeemedAt])
 }
 
 model Review {

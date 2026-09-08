@@ -11,8 +11,10 @@ export const DEFAULT_WHEEL_COLORS = ['#fbcfe8', '#fce7f3', '#f9a8d4', '#fdf2f8',
  * @param {string[]} colors couleurs hex des segments (alternées)
  * @param {HTMLImageElement|null} bgImg image de fond chargée (data URL), dessinée sous les segments
  * @param {number} rotation rotation en radians
+ * @param {Array<HTMLImageElement|null>} [images] photos des lots chargées (alignées sur prizes)
+ * @param {number} [pulse] phase d'animation 0..2π : fait « respirer » les vignettes au repos
  */
-export function drawWheel(canvas, prizes, colors, bgImg, rotation = 0) {
+export function drawWheel(canvas, prizes, colors, bgImg, rotation = 0, images = null, pulse = 0, accent = '#db2777') {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const size = canvas.width;
@@ -68,11 +70,11 @@ export function drawWheel(canvas, prizes, colors, bgImg, rotation = 0) {
   ctx.beginPath();
   ctx.arc(center, center, radius, 0, Math.PI * 2);
   ctx.lineWidth = 8;
-  ctx.strokeStyle = '#db2777';
+  ctx.strokeStyle = accent;
   ctx.stroke();
   ctx.beginPath();
   ctx.arc(center, center, size / 20, 0, Math.PI * 2);
-  ctx.fillStyle = '#db2777';
+  ctx.fillStyle = accent;
   ctx.fill();
   ctx.fillStyle = '#fff';
   ctx.font = `bold ${size / 22}px sans-serif`;
