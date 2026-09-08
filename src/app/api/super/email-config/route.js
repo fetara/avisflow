@@ -91,11 +91,17 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Adresse e-mail de test invalide.' }, { status: 400 });
   }
 
-  // Pré-vol : détecter les configurations incomplètes avec des messages actionnables
   const c = await mailCfg();
+
+  // Mode démo : on exécute quand même l'envoi (simulé en console) pour que le
+  // comportement reste observable, et on renvoie transport='demo' à l'interface.
   if (c.demo) {
-    return NextResponse.json({ error: 'Mode démo actif : désactivez-le pour envoyer réellement des e-mails.' }, { status: 400 });
+    await sendMail(to, '✅ Test (mode démo) — Roue de la Chance', '<p>E-mail simulé : visible uniquement dans la console du serveur.</p>');
+    await logAction(guard.admin.id, 'email_config.test_demo', 'Setting', to);
+    return NextResponse.json({ ok: true, transport: 'demo' });
   }
+
+  // Pré-vol : détecter les configurations incomplètes avec des messages actionnables
   if (!c.from || !/@/.test(c.from)) {
     return NextResponse.json({ error: 'Expéditeur (MAIL_FROM) manquant ou invalide. Avec Brevo, utilisez une adresse validée dans votre compte Brevo (ex : no-reply@votre-domaine.fr).' }, { status: 400 });
   }
