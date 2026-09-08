@@ -9,7 +9,7 @@ function Stars({ n }) {
   return <span className="text-amber-400">{'★'.repeat(n)}<span className="text-gray-300">{'★'.repeat(5 - n)}</span></span>;
 }
 
-export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null, companySlug = null }) {
+export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null, companySlug = null, brand = { logo: null, color: null }, formCfg = { firstName: true, lastName: true, phone: true, rgpdText: null } }) {
   const searchParams = useSearchParams();
   const [step, setStep] = useState(initial.step || 'identify');
   const [spin, setSpin] = useState(initial.spin);

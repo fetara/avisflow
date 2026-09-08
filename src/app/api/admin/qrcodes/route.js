@@ -23,6 +23,25 @@ export async function GET(req) {
   return NextResponse.json({ qrs });
 }
 
+// Rend un slug de QR unique : en cas de collision globale (les slugs servent au
+// routage /r/{slug}), on préfixe par le slug de l'entreprise puis on suffixe en numérique.
+async function uniqueQrSlug(base, companyId) {
+  if (!(await db.qrCode.findUnique({ where: { slug: base } }))) return base;
+  let prefix = base;
+  if (companyId) {
+    const c = await db.company.findUnique({ where: { id: companyId }, select: { slug: true } });
+    if (c?.slug) {
+      prefix = `${c.slug}-${base}`;
+      if (!(await db.qrCode.findUnique({ where: { slug: prefix } }))) return prefix;
+    }
+  }
+  for (let i = 2; i < 50; i++) {
+    const candidate = `${prefix}-${i}`;
+    if (!(await db.qrCode.findUnique({ where: { slug: candidate } }))) return candidate;
+  }
+  return `${prefix}-${Date.now().toString(36)}`;
+}
+
 // Destination par défaut d'un QR : la page joueur DE l'entreprise (/{slug}/play).
 // Pour un super admin hors entreprise, repli sur l'entreprise du QR manipulé ou /.
 async function defaultDestination(req, companyId = null) {
@@ -75,7 +94,12 @@ export async function PATCH(req) {
 
   const existing = await db.qrCode.findFirst({ where: { id, companyId: companyScope(guard) } });
   const data = { label, active, destination: destination || (await defaultDestination(req, existing?.companyId ?? guard.companyId)), expiresAt: expiresAt ? new Date(expiresAt) : null };
-  if (slug) data.slug = slugify(slug);
+  if (slug) {
+    const base = slugify(slug);
+    data.slug = (await db.qrCode.findFirst({ where: { slug: base, companyId: companyScope(guard) } }))
+      ? base // renommage vers son propre slug : inchangé
+      : await uniqueQrSlug(base, existing?.companyId ?? guard.companyId);
+  }
   const res = await db.qrCode.updateMany({ where: { id, companyId: companyScope(guard) }, data }).catch(() => null);
   if (!res || res.count === 0) {
     if (await db.qrCode.findUnique({ where: { id } })) await logCrossAttempt(guard.admin.id, 'QrCode', id);
