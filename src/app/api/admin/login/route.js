@@ -39,14 +39,15 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Compte non validé : vérifiez vos e-mails.' }, { status: 403 });
   }
 
-  // 2FA : si un secret TOTP existe, elle n'est exigée que si activée sur l'utilisateur
-  // ET l'entreprise (une désactivation par le super admin la supprime entièrement,
-  // y compris le repli par code e-mail). Sans secret TOTP -> 2FA e-mail historique.
+  // 2FA — logique effective :
+  // 1. Désactivée explicitement (par l'utilisateur OU par le super admin au niveau
+  //    entreprise) -> AUCUNE 2FA, connexion directe.
+  // 2. Sinon, secret TOTP présent -> code TOTP exigé.
+  // 3. Sinon (compte sans TOTP configuré) -> 2FA e-mail historique (code à 6 chiffres).
   const company = admin.companyId ? await db.company.findUnique({ where: { id: admin.companyId } }) : null;
-  const twoFactorActive = admin.totpSecret
-    ? (admin.twoFactorEnabled !== false && company?.twoFactorEnabled !== false)
-    : true;
-  if (twoFactorActive) {
+  const twoFactorDisabled = admin.twoFactorEnabled === false || company?.twoFactorEnabled === false;
+  const twoFactorActive = !twoFactorDisabled;
+  if (twoFactorActive && admin.totpSecret) {
     if (!totp) return NextResponse.json({ twoFactor: 'totp' }, { status: 401 });
     if (!authenticator.verify({ token: totp, secret: admin.totpSecret })) {
       return NextResponse.json({ error: 'Code TOTP invalide.', twoFactor: 'totp' }, { status: 401 });
