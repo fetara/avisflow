@@ -74,6 +74,11 @@ export async function PATCH(req) {
     if (!KEYS.includes(key) || typeof value !== 'string') continue;
     if (SECRET_KEYS.includes(key) && value === '') continue; // inchangé
     if (SECRET_KEYS.includes(key) && value === '••••••••') continue; // masque non modifié
+    if (value === '-') {
+      // « - » sur n'importe quel champ = supprimer la clé : l'environnement redevient maître
+      await db.setting.deleteMany({ where: { key } });
+      continue;
+    }
     await setSetting(key, value.slice(0, 500));
   }
   await logAction(guard.admin.id, 'email_config.update', 'Setting');

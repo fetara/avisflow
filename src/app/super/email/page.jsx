@@ -64,12 +64,19 @@ export default function EmailConfigPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Configuration e-mail</h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Fournisseur d’envoi des e-mails joueurs (validation) et admins (codes 2FA).
-          Ces réglages priment sur les variables d’environnement du serveur.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Configuration e-mail</h1>
+          <p className="mt-1 max-w-xl text-sm text-gray-400">
+            Fournisseur d’envoi des e-mails joueurs (validation) et admins (codes 2FA).
+            Ces réglages priment sur les variables d’environnement du serveur.
+          </p>
+        </div>
+        <button type="button" onClick={resetToEnv}
+          className="rounded-lg border border-gray-600 px-3 py-2 text-xs font-semibold text-gray-300 hover:bg-gray-800"
+          title="Supprime les clés MAIL_* enregistrées en base">
+          ♻️ Restaurer l’environnement
+        </button>
       </div>
 
       <form onSubmit={save} className="space-y-4 rounded-2xl border border-gray-800 bg-gray-950 p-5">
