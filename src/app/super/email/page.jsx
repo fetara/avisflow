@@ -23,6 +23,18 @@ export default function EmailConfigPage() {
   }
   useEffect(() => { load(); }, []);
 
+  // Réinitialisation complète : supprime toutes les clés MAIL_* de la base,
+  // les variables d'environnement du serveur redeviennent la configuration active.
+  async function resetToEnv() {
+    if (!window.confirm('Supprimer toute la configuration e-mail enregistrée en base ? Les variables d’environnement du serveur (RESEND_API_KEY, SMTP_*, DEMO_MODE…) redeviennent la source active.')) return;
+    const res = await fetch('/api/super/email-config/reset', { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { show(data.error || 'Erreur', 'error'); return; }
+    setValues({});
+    show(`Configuration réinitialisée (${data.deleted} clé(s) supprimée(s)) — l’environnement redevient maître.`);
+    load();
+  }
+
   async function save(e) {
     e.preventDefault();
     setSaving(true);
