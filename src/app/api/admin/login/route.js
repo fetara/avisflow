@@ -46,14 +46,18 @@ export async function POST(req) {
   // 3. Sinon (compte sans TOTP configuré) -> 2FA e-mail historique (code à 6 chiffres).
   const company = admin.companyId ? await db.company.findUnique({ where: { id: admin.companyId } }) : null;
   const twoFactorDisabled = admin.twoFactorEnabled === false || company?.twoFactorEnabled === false;
-  const twoFactorActive = !twoFactorDisabled;
-  if (twoFactorActive && admin.totpSecret) {
+
+  if (twoFactorDisabled) {
+    // 2FA désactivée (par l'utilisateur ou le super admin) : connexion directe,
+    // aucun code demandé — ni TOTP, ni e-mail.
+  } else if (admin.totpSecret) {
+    // Secret TOTP configuré et actif : code TOTP exigé
     if (!totp) return NextResponse.json({ twoFactor: 'totp' }, { status: 401 });
     if (!authenticator.verify({ token: totp, secret: admin.totpSecret })) {
       return NextResponse.json({ error: 'Code TOTP invalide.', twoFactor: 'totp' }, { status: 401 });
     }
   } else {
-    // 2FA par code e-mail (à moins qu'elle soit explicitement désactivée)
+    // Compte sans TOTP configuré : 2FA e-mail historique (code à 6 chiffres)
     if (!totp) {
       const code = String(Math.floor(100000 + Math.random() * 900000));
       await db.emailToken.create({
