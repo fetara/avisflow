@@ -34,18 +34,21 @@ export async function POST(req) {
 
   // Entreprise du jeu : résolue depuis le QR scanné, sinon depuis le slug d'entreprise
   // de l'URL de jeu (/{slug}/play). Un joueur peut ainsi participer chez plusieurs commerces.
+  // Les slugs de QR étant uniques par entreprise, la recherche est scopée.
   let sourceQrId = null;
   let companyId = null;
-  if (sourceSlug) {
-    const qr = await db.qrCode.findUnique({ where: { slug: sourceSlug } });
-    if (qr && qr.active) {
-      sourceQrId = qr.id;
-      companyId = qr.companyId || null;
-    }
-  }
-  if (!companyId && companySlug) {
+  if (companySlug) {
     const company = await db.company.findUnique({ where: { slug: companySlug }, select: { id: true } });
     companyId = company?.id ?? null;
+  }
+  if (sourceSlug) {
+    const qr = await db.qrCode.findFirst({
+      where: { slug: sourceSlug, ...(companyId ? { companyId } : {}) },
+    });
+    if (qr && qr.active) {
+      sourceQrId = qr.id;
+      companyId = qr.companyId ?? companyId;
+    }
   }
 
   // Champs requis = uniquement ceux activés par l'entreprise (prénom & nom activés par défaut)

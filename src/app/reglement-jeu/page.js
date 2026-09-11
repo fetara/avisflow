@@ -11,10 +11,17 @@ export default async function ReglementJeu({ searchParams }) {
   try {
     let companyId = null;
     if (src) {
-      const qr = await db.qrCode.findUnique({ where: { slug: src }, include: { company: true } });
-      if (qr?.company) {
-        companyId = qr.company.id;
-        companyName = qr.company.name;
+      // src = slug d'entreprise (URL /{slug}/play) ou legacy slug de QR
+      const company = await db.company.findUnique({ where: { slug: src } });
+      if (company) {
+        companyId = company.id;
+        companyName = company.name;
+      } else {
+        const qr = await db.qrCode.findFirst({ where: { slug: src }, include: { company: true } });
+        if (qr?.company) {
+          companyId = qr.company.id;
+          companyName = qr.company.name;
+        }
       }
     }
     prizes = await db.prize.findMany({ where: { active: true, companyId }, orderBy: { sortOrder: 'asc' } });

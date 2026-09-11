@@ -9,7 +9,7 @@ import { drawWheel, loadImage, DEFAULT_WHEEL_COLORS } from './wheelDraw';
 // Props de personnalisation (par entreprise) :
 // - colors : tableau de couleurs hex des segments
 // - bgImage : data URL d'une image de fond dessinée sous les segments
-export default function Wheel({ prizes, onLaunch, onDone, colors: colorsProp, bgImage: bgImageProp, accent = '#db2777' }) {
+export default function Wheel({ prizes, onLaunch, onDone, colors: colorsProp, bgImage: bgImageProp, accent = '#db2777', spinEndpoint = '/api/spin', spinToken = null }) {
   const canvasRef = useRef(null);
   const [rotating, setRotating] = useState(false);
   const [launching, setLaunching] = useState(false);
@@ -67,7 +67,11 @@ export default function Wheel({ prizes, onLaunch, onDone, colors: colorsProp, bg
     let winnerId;
     try {
       // Tirage CÔTÉ SERVEUR (probabilités pondérées, stock, 1 tour/e-mail)
-      const res = await fetch('/api/spin', { method: 'POST' });
+      const res = await fetch(spinEndpoint, {
+        method: 'POST',
+        headers: spinEndpoint !== '/api/spin' ? { 'Content-Type': 'application/json' } : undefined,
+        body: spinEndpoint !== '/api/spin' ? JSON.stringify({ token: spinToken }) : undefined,
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur du tirage');
       winnerId = data.prizeId;

@@ -8,6 +8,7 @@ import { ALL_PERMISSIONS } from '@/lib/permissions';
 const patchSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
   active: z.boolean().optional(),
+  isPublic: z.boolean().optional(), // visible sur la vitrine publique
   twoFactorEnabled: z.boolean().optional(), // force/désactive la 2FA pour toute l'entreprise
   permissions: z.array(z.string()).optional(), // matrice de droits du/des COMPANY_ADMIN
   adminPassword: z.string().min(8).max(72).optional(), // réinitialisation du mot de passe entreprise
@@ -30,10 +31,11 @@ export async function PATCH(req, { params }) {
 
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Données invalides.' }, { status: 400 });
-  const { name, active, permissions, adminPassword, newAdminEmail, newAdminPassword, twoFactorEnabled } = parsed.data;
+  const { name, active, isPublic, permissions, adminPassword, newAdminEmail, newAdminPassword, twoFactorEnabled } = parsed.data;
 
   if (name) await db.company.update({ where: { id }, data: { name } });
   if (typeof active === 'boolean') await db.company.update({ where: { id }, data: { active } });
+  if (typeof isPublic === 'boolean') await db.company.update({ where: { id }, data: { isPublic } });
   if (typeof twoFactorEnabled === 'boolean') {
     await db.company.update({ where: { id }, data: { twoFactorEnabled } });
     await logAction(guard.admin.id, twoFactorEnabled ? 'company.2fa_enable' : 'company.2fa_disable', 'Company', id);

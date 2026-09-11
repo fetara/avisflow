@@ -51,6 +51,16 @@ export default function QrCodesPage() {
     load();
   }
 
+  // Ouvre la page de jeu en MODE TEST : jeton signé côté serveur, aucune participation réelle
+  async function testQr(qr) {
+    try {
+      const res = await fetch(`/api/${companySlug}/test-token`);
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Impossible de démarrer le test.'); return; }
+      window.open(`/${companySlug}/play?test=${data.token}&src=${qr.slug}`, '_blank');
+    } catch { alert('Erreur réseau.'); }
+  }
+
   async function remove(qr) {
     if (!confirm(`Supprimer le QR code « ${qr.label} » ? Les statistiques associées seront perdues.`)) return;
     await fetch(`/api/${companySlug}/qrcodes?id=${qr.id}`, { method: 'DELETE' });
@@ -107,8 +117,8 @@ export default function QrCodesPage() {
               <div className="flex-1 min-w-48">
                 <p className="font-bold">{qr.label}</p>
                 <p className="text-xs text-gray-500">
-                  <a href={`${APP}/r/${qr.slug}`} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:underline">
-                    {APP}/r/{qr.slug}
+                  <a href={`/p/${companySlug}/${qr.slug}`} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:underline">
+                    /p/{companySlug}/{qr.slug}
                   </a>
                   {qr.expiresAt && <> · expire le {new Date(qr.expiresAt).toLocaleDateString('fr-FR')}</>}
                 </p>

@@ -9,9 +9,9 @@ function Stars({ n }) {
   return <span className="text-amber-400">{'★'.repeat(n)}<span className="text-gray-300">{'★'.repeat(5 - n)}</span></span>;
 }
 
-export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null, companySlug = null, brand = { logo: null, color: null }, formCfg = { firstName: true, lastName: true, phone: true, rgpdText: null } }) {
+export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null, companySlug = null, brand = { logo: null, color: null }, formCfg = { firstName: true, lastName: true, phone: true, rgpdText: null }, testMode = false, testToken = null }) {
   const searchParams = useSearchParams();
-  const [step, setStep] = useState(initial.step || 'identify');
+  const [step, setStep] = useState(testMode ? 'wheel' : (initial.step || 'identify'));
   const [spin, setSpin] = useState(initial.spin);
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', consent: false });
   const [loading, setLoading] = useState(false);
@@ -124,6 +124,9 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
       </div>
 
       {error && <div className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+      {testMode && (step === 'identify' || step === 'check-email' || step === 'review' || step === 'done') && (
+        <div className="card text-center"><p className="text-sm text-amber-600">🧪 Mode test : seul le tirage est disponible.</p></div>
+      )}
       {message && <div className="mb-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-700">{message}</div>}
 
       {/* Étape 1 : identification */}
@@ -195,7 +198,20 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
       {step === 'wheel' && (
         <div className="card">
           <h2 className="mb-6 text-center text-lg font-bold">Tentez votre chance !</h2>
-          <Wheel prizes={initial.prizes} onLaunch={onLaunch} onDone={onWheelDone} colors={wheelColors} bgImage={wheelBg} accent={brand.color || '#db2777'} />
+          {step === 'wheel' && (
+        <div className="card">
+          {testMode && (
+            <p className="mb-3 rounded-xl bg-amber-50 p-2 text-center text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+              🧪 MODE TEST — aucune participation réelle, stock intact
+            </p>
+          )}
+          <h2 className="mb-6 text-center text-lg font-bold">Tentez votre chance !</h2>
+          <Wheel prizes={initial.prizes} onLaunch={onLaunch} onDone={onWheelDone}
+            colors={wheelColors} bgImage={wheelBg} accent={brand.color || '#db2777'}
+            spinEndpoint={testMode ? '/api/admin/spin-test' : '/api/spin'} spinToken={testToken} />
+          <p className="mt-4 text-center text-sm text-gray-500">Cliquez pour lancer — le tirage au sort est effectué instantanément côté serveur.</p>
+        </div>
+      )}
           <p className="mt-4 text-center text-sm text-gray-500">Cliquez pour lancer — le tirage au sort est effectué instantanément côté serveur.</p>
         </div>
       )}
@@ -221,9 +237,15 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
             <p className="mt-1 select-all font-mono text-2xl font-bold tracking-widest">{spin.giftCode}</p>
           </div>
           <p className="mt-3 max-w-xs text-xs text-gray-500">Présentez ce code en caisse pour bénéficier de votre gain.</p>
-          <button onClick={() => setStep('review')} style={brand.color ? { backgroundColor: brand.color } : undefined} className="btn-primary mt-6 w-full max-w-xs">
-            Continuer : laissez-nous votre avis
-          </button>
+          {testMode ? (
+            <button onClick={() => setStep('wheel')} style={brand.color ? { backgroundColor: brand.color } : undefined} className="btn-primary mt-6 w-full max-w-xs">
+              🔄 Rejouer (test)
+            </button>
+          ) : (
+            <button onClick={() => setStep('review')} style={brand.color ? { backgroundColor: brand.color } : undefined} className="btn-primary mt-6 w-full max-w-xs">
+              Continuer : laissez-nous votre avis
+            </button>
+          )}
         </div>
       )}
 
@@ -267,15 +289,36 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
       {step === 'done' && (
         <div className="card text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl">✅</div>
-          <h2 className="text-lg font-bold">Merci beaucoup !</h2>
-          <p className="mt-2 text-sm text-gray-600">Votre avis a bien été enregistré. À très bientôt en boutique !</p>
+          <h2 className="text-lg font-bold">Vous avez déjà participé !</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Votre participation est enregistrée{spin?.at ? ` le ${new Date(spin.at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}` : ''}.
+            Un seul tour par e-mail — revenez lors de la prochaine opération !
+          </p>
+          {/* Rappel du gain et de son code : c'est l'info dont le joueur a besoin en caisse */}
+          {spin && (
+            <div className="mx-auto mt-5 max-w-xs rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50 p-4">
+              {spin.photo && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={spin.photo} alt={spin.label} className="mx-auto h-24 w-24 rounded-xl object-cover shadow" />
+              )}
+              <p className="mt-2 font-bold text-brand-700">🎁 {spin.label}</p>
+              <p className="mt-1 select-all font-mono text-lg font-bold tracking-widest">{spin.giftCode}</p>
+              <p className="mt-1 text-xs text-gray-500">Présentez ce code en caisse pour récupérer votre gain.</p>
+            </div>
+          )}
+          {initial.reviewDone ? (
+            <p className="mt-4 text-sm text-gray-500">Votre avis a bien été enregistré, merci ! 🙏</p>
+          ) : (
+            <button onClick={() => setStep('review')} className="btn-primary mt-4 w-full max-w-xs">
+              Laisser votre avis
+            </button>
+          )}
           {googleUrl && (
             <a href={googleUrl} target="_blank" rel="noopener noreferrer" onClick={trackGoogle}
-              className="btn-secondary mt-5 w-full">
+              className="btn-secondary mt-3 w-full max-w-xs">
               ⭐ Laisser un avis sur Google
             </a>
           )}
-          <p className="mt-3 text-xs text-gray-400">Facultatif et sans condition — merci du temps pris pour nous aider.</p>
         </div>
       )}
 

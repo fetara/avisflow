@@ -23,23 +23,17 @@ export async function GET(req) {
   return NextResponse.json({ qrs });
 }
 
-// Rend un slug de QR unique : en cas de collision globale (les slugs servent au
-// routage /r/{slug}), on préfixe par le slug de l'entreprise puis on suffixe en numérique.
+// Rend un slug de QR unique DANS l'entreprise (unicité par entreprise depuis la
+// migration 20260911000000). En collision interne, on suffixe en numérique.
 async function uniqueQrSlug(base, companyId) {
-  if (!(await db.qrCode.findUnique({ where: { slug: base } }))) return base;
-  let prefix = base;
-  if (companyId) {
-    const c = await db.company.findUnique({ where: { id: companyId }, select: { slug: true } });
-    if (c?.slug) {
-      prefix = `${c.slug}-${base}`;
-      if (!(await db.qrCode.findUnique({ where: { slug: prefix } }))) return prefix;
-    }
-  }
+  const scope = companyId ? { companyId, slug: base } : { slug: base, companyId: null };
+  if (!(await db.qrCode.findFirst({ where: scope }))) return base;
   for (let i = 2; i < 50; i++) {
-    const candidate = `${prefix}-${i}`;
-    if (!(await db.qrCode.findUnique({ where: { slug: candidate } }))) return candidate;
+    const candidate = `${base}-${i}`;
+    const sc = companyId ? { companyId, slug: candidate } : { slug: candidate, companyId: null };
+    if (!(await db.qrCode.findFirst({ where: sc }))) return candidate;
   }
-  return `${prefix}-${Date.now().toString(36)}`;
+  return `${base}-${Date.now().toString(36)}`;
 }
 
 // Destination par défaut d'un QR : la page joueur DE l'entreprise (/{slug}/play).

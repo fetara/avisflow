@@ -29,7 +29,13 @@ export async function GET(req, { params }) {
   const dark = sp.get('dark') || COLORS.dark;
   const light = sp.get('light') || '#ffffff';
   const withLogo = sp.get('logo') === '1';
-  const url = `${APP_URL}/r/${qr.slug}`;
+  // URL imprimée sur le QR : /p/{companySlug}/{qrSlug} (lisible, non ambigu)
+  let companySlug = req.headers.get('x-company-slug');
+  if (!companySlug && qr.companyId) {
+    const c = await db.company.findUnique({ where: { id: qr.companyId }, select: { slug: true } });
+    companySlug = c?.slug || null;
+  }
+  const url = companySlug ? `${APP_URL}/p/${companySlug}/${qr.slug}` : `${APP_URL}/r/${qr.slug}`;
 
   const safeName = qr.slug.replace(/[^a-z0-9-]/gi, '_');
 

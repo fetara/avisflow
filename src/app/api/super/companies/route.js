@@ -40,6 +40,7 @@ export async function GET(req) {
       name: c.name,
       slug: c.slug,
       active: c.active,
+      isPublic: c.isPublic !== false,
       twoFactorEnabled: c.twoFactorEnabled !== false,
       createdAt: c.createdAt,
       admins: c.admins.filter((a) => a.role === 'COMPANY_ADMIN'),

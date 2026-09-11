@@ -37,6 +37,8 @@ model Company {
   active    Boolean  @default(true)
   // 2FA imposée au niveau entreprise (false = 2FA ignorée pour tous ses admins)
   twoFactorEnabled Boolean @default(true)
+  // Visible publiquement sur la vitrine (entreprises participantes)
+  isPublic Boolean @default(true)
   admins    Admin[]
   qrCodes   QrCode[]
   prizes    Prize[]
@@ -93,7 +95,7 @@ model QrCode {
   companyId  String?
   company    Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   label      String
-  slug       String    @unique
+  slug       String
   active     Boolean   @default(true)
   destination String   @default("/jeu")
   expiresAt  DateTime?
@@ -102,6 +104,9 @@ model QrCode {
   scans      QrScan[]
   customers  Customer[]
   createdAt  DateTime  @default(now())
+
+  // Slug unique PAR entreprise : deux entreprises peuvent avoir un QR « promo »
+  @@unique([companyId, slug])
 }
 
 model QrScan {

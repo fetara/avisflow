@@ -70,7 +70,7 @@ export default async function PlayPage({ params, searchParams }) {
         const review = await db.review.findFirst({ where: { customerId: customer.id } });
         initial = {
           step: spin ? (review ? 'done' : 'review') : 'wheel',
-          spin: spin ? { label: spin.prize.label, giftCode: spin.giftCode, photo: spin.prize.photo || null } : null,
+          spin: spin ? { label: spin.prize.label, giftCode: spin.giftCode, photo: spin.prize.photo || null, at: spin.createdAt } : null,
           reviewDone: Boolean(review),
           prizes,
           email: customer.email,
@@ -99,11 +99,15 @@ export default async function PlayPage({ params, searchParams }) {
       };
     } catch { /* config invalide -> défauts */ }
 
+    // Mode TEST admin : ?test=TOKEN (signé, vérifié côté serveur au tirage)
+    const testToken = searchParams?.test || '';
+
     return <GameFlow initial={initial}
       src={searchParams?.src || ''} companySlug={company.slug} err=""
       companyName={company.name} headline={headline} sub={sub}
       wheelColors={wheelColors} wheelBg={wheelBg}
-      brand={brand} formCfg={formCfg} />;
+      brand={brand} formCfg={formCfg}
+      testMode={Boolean(testToken)} testToken={testToken} />;
   } catch (e) {
     return <NotReady companyName={company.name} />;
   }
