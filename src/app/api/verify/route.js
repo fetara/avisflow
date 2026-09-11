@@ -40,7 +40,16 @@ export async function GET(req) {
   await db.emailToken.update({ where: { id: row.id }, data: { usedAt: new Date() } });
 
   const jwt = await signPlayerSession({ sub: customer.id, email: customer.email });
-  const res = NextResponse.redirect(new URL('/jeu?step=wheel', req.url), 302);
+
+  // Redirection vers la page de jeu DE l'entreprise (le jeu n'existe plus de façon
+  // générique) : /{slug}/play — la session fraîchement posée y affiche la roue.
+  let companySlug = null;
+  if (customer.companyId) {
+    const company = await db.company.findUnique({ where: { id: customer.companyId }, select: { slug: true } });
+    companySlug = company?.slug || null;
+  }
+  const target = companySlug ? `/${companySlug}/play` : '/';
+  const res = NextResponse.redirect(new URL(target, req.url), 302);
   res.cookies.set(PLAYER_COOKIE_NAME, jwt, playerCookieOptions());
   return res;
 }
