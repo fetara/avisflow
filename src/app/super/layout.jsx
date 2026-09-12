@@ -23,6 +23,7 @@ export default async function SuperAdminLayout({ children }) {
           { href: '/super', label: 'Entreprises', icon: '🏢' },
           { href: '/super/audit', label: 'Journal d’audit', icon: '📜' },
           { href: '/super/email', label: 'E-mails', icon: '✉️' },
+          { href: '/super/env', label: 'Serveur', icon: '⚙️' },
         ]}
         actions={
           <>
