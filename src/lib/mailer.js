@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
-import { getSetting } from '@/lib/db';
+import { getSetting, getAppUrl } from '@/lib/db';
 
-const APP_URL = process.env.APP_URL || 'http://localhost:3000';
+let APP_URL_CACHE = null;
 
 // Configuration e-mail : lue en priorité depuis la table Setting (modifiable dans
 // l'écran super admin), avec repli sur les variables d'environnement d'origine.
@@ -58,6 +58,12 @@ function smtpTransport(cfg) {
   });
 }
 
+// APP_URL persistante (ServerConfig) avec repli env ; résolue à chaque envoi
+export async function resolveAppUrl() {
+  APP_URL_CACHE = await getAppUrl();
+  return APP_URL_CACHE;
+}
+
 export async function sendMail(to, subject, html) {
   const c = await mailConfig();
   const demo = c.demo === 'true' || (!c.resendKey && !c.smtpHost);
@@ -90,6 +96,7 @@ function layout(title, body) {
 }
 
 export async function sendCustomerValidation(to, firstName, link) {
+  await resolveAppUrl();
   await sendMail(
     to,
     'Confirmez votre e-mail pour jouer 🎡',
@@ -101,6 +108,7 @@ export async function sendCustomerValidation(to, firstName, link) {
 }
 
 export async function sendAdminValidation(to, link) {
+  await resolveAppUrl();
   await sendMail(
     to,
     'Validez votre compte administrateur',
@@ -110,6 +118,7 @@ export async function sendAdminValidation(to, link) {
 }
 
 export async function sendLoginCode(to, code) {
+  await resolveAppUrl();
   await sendMail(
     to,
     `Votre code de connexion : ${code}`,
@@ -118,5 +127,5 @@ export async function sendLoginCode(to, code) {
   );
 }
 
-export { APP_URL };
+export { APP_URL_CACHE as APP_URL };
 

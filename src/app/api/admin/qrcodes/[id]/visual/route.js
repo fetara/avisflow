@@ -2,8 +2,9 @@ import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 import { db } from '@/lib/db';
 import { requirePermission, companyScope } from '@/lib/admin-guard';
+import { getAppUrl } from '@/lib/db';
 
-const APP_URL = process.env.APP_URL || 'http://localhost:3000';
+
 
 const COLORS = {
   dark: '#1f2937',
@@ -35,6 +36,7 @@ export async function GET(req, { params }) {
     const c = await db.company.findUnique({ where: { id: qr.companyId }, select: { slug: true } });
     companySlug = c?.slug || null;
   }
+  const APP_URL = (await getAppUrl()) || new URL(req.url).origin;
   const url = companySlug ? `${APP_URL}/p/${companySlug}/${qr.slug}` : `${APP_URL}/r/${qr.slug}`;
 
   const safeName = qr.slug.replace(/[^a-z0-9-]/gi, '_');

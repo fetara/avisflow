@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 import { sendAdminValidation } from '@/lib/mailer';
 import { randomToken, sha256, getClientIp } from '@/lib/utils';
+import { getAppUrl } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
 
 const schema = z.object({
@@ -50,7 +51,7 @@ export async function disabled_POST(req) {
     },
   });
 
-  const appUrl = process.env.APP_URL || new URL(req.url).origin;
+  const appUrl = (await getAppUrl()) || new URL(req.url).origin;
   try {
     await sendAdminValidation(email, `${appUrl}/api/admin/verify-email?token=${token}`);
   } catch (e) {

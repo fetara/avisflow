@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import QRCode from 'qrcode';
 import { db } from '@/lib/db';
 import { requirePermission } from '@/lib/admin-guard';
+import { getAppUrl } from '@/lib/db';
 
 // QR code PNG menant à la page de jeu de l'entreprise : /{slug}/play
 export async function GET(req) {
@@ -21,7 +22,7 @@ export async function GET(req) {
   }
   if (!slug) return new NextResponse('Entreprise introuvable', { status: 404 });
 
-  const APP_URL = process.env.APP_URL || new URL(req.url).origin;
+  const APP_URL = (await getAppUrl()) || new URL(req.url).origin;
   const url = `${APP_URL}/${slug}/play`;
   const png = await QRCode.toBuffer(url, { type: 'png', width: 600, margin: 2 });
   return new NextResponse(png, {

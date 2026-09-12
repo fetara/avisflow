@@ -5,7 +5,7 @@ import { sendCustomerValidation } from '@/lib/mailer';
 import { randomToken, sha256 } from '@/lib/utils';
 import { rateLimit } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/utils';
-import { getCompanySettings } from '@/lib/db';
+import { getCompanySettings, getAppUrl } from '@/lib/db';
 
 // Prénom/nom/téléphone sont rendus optionnels AU NIVEAU ZOD : c'est la configuration
 // de l'entreprise (FORM_* dans CompanySetting) qui impose ou non les champs côté serveur.
@@ -77,7 +77,7 @@ export async function POST(req) {
     },
   });
 
-  const appUrl = process.env.APP_URL || new URL(req.url).origin;
+  const appUrl = (await getAppUrl()) || new URL(req.url).origin;
   const link = `${appUrl}/api/verify?token=${token}`;
   try {
     await sendCustomerValidation(email, firstName, link);

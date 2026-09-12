@@ -3,12 +3,13 @@ import QRCode from 'qrcode';
 import { authenticator } from 'otplib';
 import { db } from '@/lib/db';
 import { requireSuperAdmin, logAction } from '@/lib/admin-guard';
+import { getAppName } from '@/lib/db';
 
-const APP_NAME = process.env.APP_NAME || 'Roue de la Chance';
+
 
 // URL otpauth:// lisible par Google Authenticator & co.
-function otpauthUrl(email, secret) {
-  return authenticator.keyuri(email, APP_NAME, secret);
+async function otpauthUrl(email, secret) {
+  return authenticator.keyuri(email, await getAppName(), secret);
 }
 
 // Premier compte COMPANY_ADMIN de l'entreprise (porte le secret TOTP).
@@ -27,7 +28,7 @@ export async function GET(req, { params }) {
     return NextResponse.json({ error: 'Aucun secret TOTP pour cette entreprise. Utilisez POST pour en générer un.' }, { status: 404 });
   }
 
-  const url = otpauthUrl(admin.email, admin.totpSecret);
+  const url = await otpauthUrl(admin.email, admin.totpSecret);
   if (new URL(req.url).searchParams.get('json') === '1') {
     return NextResponse.json({ otpauthUrl: url, secret: admin.totpSecret, email: admin.email });
   }
@@ -55,5 +56,5 @@ export async function POST(req, { params }) {
   await db.admin.update({ where: { id: admin.id }, data: { totpSecret: secret } });
   await logAction(guard.admin.id, 'company.totp_regen', 'Company', id);
 
-  return NextResponse.json({ ok: true, otpauthUrl: otpauthUrl(admin.email, secret), secret });
+  return NextResponse.json({ ok: true, otpauthUrl: await otpauthUrl(admin.email, secret), secret });
 }
