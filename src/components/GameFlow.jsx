@@ -110,11 +110,19 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
 
   // ---------- Rendu ----------
   return (
-    <main className="mx-auto min-h-screen max-w-lg px-4 py-8">
+    <main className="relative mx-auto min-h-screen max-w-lg px-4 py-8">
+      {/* Fond d'écran plein écran : visuel de l'entreprise + voile dégradé pour la lisibilité */}
+      {wheelBg && (
+        <div aria-hidden="true" className="fixed inset-0 -z-10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={wheelBg} alt="" className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/55 to-white/80 dark:from-gray-950/70 dark:via-gray-950/55 dark:to-gray-950/85" />
+        </div>
+      )}
       <div className="mb-8 text-center">
         {brand.logo
           ? // eslint-disable-next-line @next/next/no-img-element
-            <img src={brand.logo} alt={companyName || 'Logo'} className="mx-auto mb-3 h-16 w-auto max-w-[180px] object-contain" />
+            <img src={brand.logo} alt={companyName || 'Logo'} className="mx-auto mb-3 h-16 w-auto max-w-[180px] rounded-xl bg-white/70 object-contain p-1 shadow-md backdrop-blur" />
           : <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-3xl shadow-lg">🎡</div>}
         <h1 className="text-2xl font-extrabold">{headline || 'Scannez, jouez, gagnez !'}</h1>
         {companyName
@@ -131,7 +139,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
 
       {/* Étape 1 : identification */}
       {step === 'identify' && (
-        <form onSubmit={submitIdentify} className="card">
+        <form onSubmit={submitIdentify} className="card !bg-white/85 shadow-2xl backdrop-blur-md dark:!bg-gray-900/85">
           <h2 className="text-lg font-bold">Qui êtes-vous ?</h2>
           <p className="mt-1 text-sm text-gray-500">
             {companyName ? `Un e-mail de confirmation vous sera envoyé pour débloquer la roue de ${companyName}.` : 'Un e-mail de confirmation vous sera envoyé pour débloquer le jeu.'}
@@ -196,23 +204,17 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
 
       {/* Étape 2 : roue */}
       {step === 'wheel' && (
-        <div className="card">
-          <h2 className="mb-6 text-center text-lg font-bold">Tentez votre chance !</h2>
-          {step === 'wheel' && (
-        <div className="card">
+        <div className="card !bg-white/85 shadow-2xl backdrop-blur-md dark:!bg-gray-900/85">
           {testMode && (
             <p className="mb-3 rounded-xl bg-amber-50 p-2 text-center text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
               🧪 MODE TEST — aucune participation réelle, stock intact
             </p>
           )}
-          <h2 className="mb-6 text-center text-lg font-bold">Tentez votre chance !</h2>
+          <h2 className="mb-6 text-center text-2xl font-extrabold">Tentez votre chance !</h2>
           <Wheel prizes={initial.prizes} onLaunch={onLaunch} onDone={onWheelDone}
             colors={wheelColors} bgImage={wheelBg} accent={brand.color || '#db2777'}
             spinEndpoint={testMode ? '/api/admin/spin-test' : '/api/spin'} spinToken={testToken} />
-          <p className="mt-4 text-center text-sm text-gray-500">Cliquez pour lancer — le tirage au sort est effectué instantanément côté serveur.</p>
-        </div>
-      )}
-          <p className="mt-4 text-center text-sm text-gray-500">Cliquez pour lancer — le tirage au sort est effectué instantanément côté serveur.</p>
+          <p className="mt-4 text-center text-sm text-gray-500">Cliquez ou balayez la roue pour lancer — tirage instantané côté serveur.</p>
         </div>
       )}
 
@@ -251,7 +253,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
 
       {/* Étape 4 : avis */}
       {step === 'review' && !reviewSent && (
-        <form onSubmit={submitReview} className="card">
+        <form onSubmit={submitReview} className="card !bg-white/85 shadow-2xl backdrop-blur-md dark:!bg-gray-900/85">
           <h2 className="text-lg font-bold">Votre avis compte !</h2>
           <p className="mt-1 text-sm text-gray-500">Dites-nous ce que vous avez pensé de votre visite.</p>
           <div className="mt-5 space-y-4">

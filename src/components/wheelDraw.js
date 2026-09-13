@@ -59,7 +59,7 @@ export function drawWheel(canvas, prizes, colors, bgImg, rotation = 0, images = 
     ctx.rotate(angle + arc / 2);
     ctx.textAlign = 'right';
     ctx.fillStyle = '#9d174d';
-    ctx.font = `bold ${Math.max(11, size / 34)}px sans-serif`;
+    ctx.font = `bold ${Math.max(13, size / 26)}px sans-serif`;
     const label = prizes[i]?.label || '';
     const maxChars = 18;
     ctx.fillText(label.length > maxChars ? label.slice(0, maxChars - 1) + '…' : label, radius - 16, 5);
