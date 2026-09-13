@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 import { db } from '@/lib/db';
-import { requireAdmin, ROLES } from '@/lib/admin-guard';
+import { requireAdmin } from '@/lib/admin-guard';
+import { ROLES } from '@/lib/permissions';
 
 const secret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret-change-me');
 
