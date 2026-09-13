@@ -58,10 +58,10 @@ export async function POST(req) {
   if (!parsed.success) return NextResponse.json({ error: 'QR code invalide.' }, { status: 400 });
   const { label, slug, destination, active, expiresAt } = parsed.data;
 
-  const finalSlug = slugify(slug || label);
+  // Slug unique DANS l'entreprise (suffixe numérique automatique en collision)
+  const base = slugify(slug || label);
+  const finalSlug = await uniqueQrSlug(base, guard.companyId);
   const dest = destination || (await defaultDestination(req, guard.companyId));
-  const exists = await db.qrCode.findUnique({ where: { slug: finalSlug } });
-  if (exists) return NextResponse.json({ error: `Le slug "${finalSlug}" est déjà utilisé.` }, { status: 409 });
 
   const qr = await db.qrCode.create({
     data: {
@@ -90,9 +90,11 @@ export async function PATCH(req) {
   const data = { label, active, destination: destination || (await defaultDestination(req, existing?.companyId ?? guard.companyId)), expiresAt: expiresAt ? new Date(expiresAt) : null };
   if (slug) {
     const base = slugify(slug);
-    data.slug = (await db.qrCode.findFirst({ where: { slug: base, companyId: companyScope(guard) } }))
-      ? base // renommage vers son propre slug : inchangé
-      : await uniqueQrSlug(base, existing?.companyId ?? guard.companyId);
+    // Renommage : ok si le slug visé est libre dans l'entreprise (ou déjà le sien)
+    const taken = await db.qrCode.findFirst({
+      where: { slug: base, companyId: companyScope(guard), id: { not: id } },
+    });
+    data.slug = taken ? await uniqueQrSlug(base, existing?.companyId ?? guard.companyId) : base;
   }
   const res = await db.qrCode.updateMany({ where: { id, companyId: companyScope(guard) }, data }).catch(() => null);
   if (!res || res.count === 0) {

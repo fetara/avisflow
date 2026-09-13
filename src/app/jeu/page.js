@@ -8,8 +8,13 @@ export const dynamic = 'force-dynamic';
 export default async function JeuRedirect({ searchParams }) {
   const src = searchParams?.src || '';
   if (src) {
-    const qr = await db.qrCode.findUnique({
+    // src peut être un slug d'entreprise (URL /{slug}/play) ou un slug de QR
+    // (slugs uniques PAR entreprise -> findFirst, jamais findUnique sur le slug seul)
+    const company = await db.company.findUnique({ where: { slug: src }, select: { slug: true } });
+    if (company?.slug) redirect(`/${company.slug}/play`);
+    const qr = await db.qrCode.findFirst({
       where: { slug: src },
+      orderBy: { createdAt: 'desc' },
       select: { company: { select: { slug: true } } },
     });
     if (qr?.company?.slug) redirect(`/${qr.company.slug}/play`);
