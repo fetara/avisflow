@@ -19,6 +19,7 @@ export default function Wheel({ prizes, onLaunch, onDone, colors: colorsProp, bg
   const colors = Array.isArray(colorsProp) && colorsProp.length > 0 ? colorsProp : DEFAULT_WHEEL_COLORS;
   const bgImgRef = useRef(null); // image de fond chargée (null tant que non chargée)
   const imagesRef = useRef([]);  // photos des lots chargées, alignées sur prizes
+  const winnerRef = useRef(-1);  // index du segment gagnant (surbrillance après tirage)
   const [ready, setReady] = useState(0); // compteur pour redessiner après chargements
 
   // Chargement de l'image de fond (data URL) puis redessin
@@ -47,7 +48,7 @@ export default function Wheel({ prizes, onLaunch, onDone, colors: colorsProp, bg
     const start = performance.now();
     const loop = (now) => {
       drawWheel(canvasRef.current, prizes, colors, bgImgRef.current,
-        rotationRef.current * Math.PI / 180, imagesRef.current, ((now - start) / 500) % (Math.PI * 2), accent);
+        rotationRef.current * Math.PI / 180, imagesRef.current, ((now - start) / 500) % (Math.PI * 2), accent, winnerRef.current);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -75,6 +76,7 @@ export default function Wheel({ prizes, onLaunch, onDone, colors: colorsProp, bg
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur du tirage');
       winnerId = data.prizeId;
+      winnerRef.current = Math.max(0, prizes.findIndex((p) => p.id === winnerId));
       onLaunch?.(data);
     } catch (e2) {
       setError(e2.message);
@@ -100,7 +102,7 @@ export default function Wheel({ prizes, onLaunch, onDone, colors: colorsProp, bg
     function frame(now) {
       const t = Math.min(1, (now - start) / duration);
       rotationRef.current = from + delta * easeOut(t);
-      drawWheel(canvasRef.current, prizes, colors, bgImgRef.current, (rotationRef.current * Math.PI) / 180, imagesRef.current, 0, accent);
+      drawWheel(canvasRef.current, prizes, colors, bgImgRef.current, (rotationRef.current * Math.PI) / 180, imagesRef.current, 0, accent, winnerRef.current);
       if (t < 1) requestAnimationFrame(frame);
       else {
         setRotating(false);
