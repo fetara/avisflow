@@ -85,11 +85,14 @@ export default function Wheel({ prizes, onLaunch, onDone, colors: colorsProp, bg
     }
     setLaunching(false);
 
-    // Animation : arrêt sur le segment gagnant
+    // Animation : arrêt sur le segment gagnant.
+    // L'aiguille est en HAUT de la roue = 270° dans le repère canvas (0°=droite,
+    // sens horaire). Le milieu du segment i (angle = rotation + i*arc + arc/2)
+    // doit donc se terminer à 270° : rotation finale = 270 - (i*arc + arc/2).
     const winnerIndex = Math.max(0, prizes.findIndex((p) => p.id === winnerId));
     const n = prizes.length;
     const arc = 360 / n;
-    const targetBase = 360 - (winnerIndex * arc + arc / 2);
+    const targetBase = 270 - (winnerIndex * arc + arc / 2);
     const turns = 5 * 360;
     const from = rotationRef.current % 360;
     const delta = turns + ((targetBase - from) % 360 + 360) % 360;

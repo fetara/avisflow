@@ -63,7 +63,11 @@ export default function ClientsPage() {
                 <td className="p-3 font-medium">{c.firstName} {c.lastName}</td>
                 <td className="p-3">{c.email}</td>
                 <td className="p-3">{c.phone || '—'}</td>
-                <td className="p-3">{c.sourceQr?.label || '—'}</td>
+                <td className="p-3">
+                  {c.sourceQr
+                    ? <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">{c.sourceQr.label}</span>
+                    : <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500" title="Arrivé via un lien direct (sans QR code)">🔗 Lien direct</span>}
+                </td>
                 <td className="p-3">{c.emailVerifiedAt ? '✅' : '⏳'}</td>
                 <td className="p-3">{c._count.spins}</td>
                 <td className="p-3">{c._count.reviews}</td>

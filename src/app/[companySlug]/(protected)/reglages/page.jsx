@@ -21,7 +21,7 @@ export default function ReglagesPage() {
     // Lots réels pour l'aperçu de la roue (repli sur des libellés de démo si non autorisé)
     fetch(`/api/${companySlug}/prizes`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d) => setPreviewPrizes((d.prizes || []).map((p) => ({ label: p.label }))))
+      .then((d) => setPreviewPrizes((d.prizes || []).map((p) => ({ label: p.label, photo: p.photo }))))
       .catch(() => setPreviewPrizes([{ label: 'Bon d’achat' }, { label: 'Rejouez' }, { label: 'Café offert' }, { label: 'Réduction' }]));
   }, [companySlug]);
 
@@ -148,6 +148,7 @@ export default function ReglagesPage() {
             prizes={previewPrizes || [{ label: 'Lot 1' }, { label: 'Lot 2' }, { label: 'Lot 3' }, { label: 'Lot 4' }]}
             colors={wheelColors.length ? wheelColors : null}
             bgImage={wheelBg || null}
+            accent={/^#[0-9a-fA-F]{6}$/.test(val('BRAND_COLOR')) ? val('BRAND_COLOR') : '#db2777'}
           />
         </div>
         </div>

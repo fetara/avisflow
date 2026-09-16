@@ -8,7 +8,7 @@ import { drawWheel, loadImage, DEFAULT_WHEEL_COLORS } from './wheelDraw';
  * Même rendu que la vraie roue (Wheel), sans interaction ni tirage :
  * les couleurs et l'image de fond se mettent à jour en direct pendant l'édition.
  */
-export default function WheelPreview({ prizes = [], colors = null, bgImage = null, size = 280 }) {
+export default function WheelPreview({ prizes = [], colors = null, bgImage = null, size = 280, accent = '#db2777' }) {
   const canvasRef = useRef(null);
   const [bgImg, setBgImg] = useState(null);
   const [images, setImages] = useState([]);
@@ -32,12 +32,14 @@ export default function WheelPreview({ prizes = [], colors = null, bgImage = nul
     let raf;
     const start = performance.now();
     const loop = (now) => {
-      drawWheel(canvasRef.current, prizes, cols, bgImg, -Math.PI / 2, images, ((now - start) / 500) % (Math.PI * 2));
+      // Rotation initiale identique à la vraie roue : le 1er lot sous l'aiguille (270°)
+      const arc = (Math.PI * 2) / (prizes.length || 1);
+      drawWheel(canvasRef.current, prizes, cols, bgImg, -Math.PI / 2 - arc / 2, images, ((now - start) / 500) % (Math.PI * 2), accent);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [prizes, colors, bgImg, images]);
+  }, [prizes, colors, bgImg, images, accent]);
 
   return (
     <div className="flex flex-col items-center">
