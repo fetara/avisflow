@@ -11,19 +11,41 @@ export default function ReglagesPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [previewPrizes, setPreviewPrizes] = useState(null); // null = pas encore chargé
+  const [companyInfo, setCompanyInfo] = useState(null); // fiche entreprise (nom, adresse…)
   const [tfa, setTfa] = useState(null);
   const [tfaForm, setTfaForm] = useState({ password: '', totp: '' });
   const [tfaMsg, setTfaMsg] = useState('');
+  const [savingCompany, setSavingCompany] = useState(false);
 
   useEffect(() => {
     fetch(`/api/${companySlug}/settings`).then((r) => r.json()).then((d) => setSettings(d.settings || {})).catch(() => setError('Chargement impossible'));
     fetch(`/api/${companySlug}/twofa`).then((r) => r.json()).then(setTfa).catch(() => {});
+    fetch(`/api/${companySlug}/company`).then((r) => r.json()).then((d) => setCompanyInfo(d.company || null)).catch(() => {});
     // Lots réels pour l'aperçu de la roue (repli sur des libellés de démo si non autorisé)
     fetch(`/api/${companySlug}/prizes`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d) => setPreviewPrizes((d.prizes || []).map((p) => ({ label: p.label, photo: p.photo }))))
       .catch(() => setPreviewPrizes([{ label: 'Bon d’achat' }, { label: 'Rejouez' }, { label: 'Café offert' }, { label: 'Réduction' }]));
   }, [companySlug]);
+
+  // Fiche entreprise : nom, adresse, téléphone, site web
+  async function saveCompany(e) {
+    e.preventDefault();
+    setSavingCompany(true);
+    const res = await fetch(`/api/${companySlug}/company`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: companyInfo.name,
+        address: companyInfo.address || '',
+        phone: companyInfo.phone || '',
+        website: companyInfo.website || '',
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSavingCompany(false);
+    if (!res.ok) { show(data.error || 'Erreur', 'error'); return; }
+    show('Fiche entreprise enregistrée');
+  }
 
   async function toggle2fa(action) {
     setTfaMsg('');
@@ -91,10 +113,51 @@ export default function ReglagesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Réglages</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Réglages</h1>
+        <a href={`/${companySlug}/play`} target="_blank" rel="noopener noreferrer"
+          className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
+          👁️ Voir ce que voit mon client
+        </a>
+      </div>
+      {/* 🏢 Entreprise : fiche publique (nom, adresse, téléphone, site) */}
+      {companyInfo && (
+        <form onSubmit={saveCompany} className="card space-y-4">
+          <h2 className="font-bold">🏢 Entreprise</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label" htmlFor="cname">Nom *</label>
+              <input id="cname" className="input" required maxLength={80} value={companyInfo.name}
+                onChange={(e) => setCompanyInfo({ ...companyInfo, name: e.target.value })} />
+            </div>
+            <div>
+              <label className="label" htmlFor="cphone">Téléphone</label>
+              <input id="cphone" type="tel" className="input" maxLength={20} value={companyInfo.phone || ''}
+                onChange={(e) => setCompanyInfo({ ...companyInfo, phone: e.target.value })} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="label" htmlFor="caddress">Adresse</label>
+              <input id="caddress" className="input" maxLength={200} value={companyInfo.address || ''}
+                onChange={(e) => setCompanyInfo({ ...companyInfo, address: e.target.value })} />
+            </div>
+            <div>
+              <label className="label" htmlFor="cweb">Site web</label>
+              <input id="cweb" type="url" className="input" placeholder="https://…" maxLength={200} value={companyInfo.website || ''}
+                onChange={(e) => setCompanyInfo({ ...companyInfo, website: e.target.value })} />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button disabled={savingCompany} className="btn-primary !py-2">
+              {savingCompany ? 'Enregistrement…' : 'Enregistrer'}
+            </button>
+            <p className="text-xs text-gray-400">Ces informations apparaissent sur vos pages publiques.</p>
+          </div>
+        </form>
+      )}
+
       {/* Apparence de la roue : couleurs des segments + image de fond + aperçu en direct */}
       <form onSubmit={save} className="card space-y-4">
-        <h2 className="font-bold">Apparence de la roue</h2>
+        <h2 className="font-bold">🎡 Roue de la chance — apparence</h2>
         <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
         <div className="space-y-4">
         <div>
@@ -155,7 +218,9 @@ export default function ReglagesPage() {
       </form>
 
 
+      {/* ⭐ Avis : modération + lien Google */}
       <form onSubmit={save} className="card space-y-4">
+        <h2 className="font-bold">⭐ Avis</h2>
         {FIELDS.map(([key, label]) => (
           <div key={key}>
             <label className="label">{label}</label>
@@ -172,7 +237,7 @@ export default function ReglagesPage() {
       {/* Formulaire joueurs + anti-abus + campagne */}
       <div className="grid gap-6 lg:grid-cols-2">
         <form onSubmit={save} className="card space-y-4">
-          <h2 className="font-bold">Formulaire joueurs & participation</h2>
+          <h2 className="font-bold">🎮 Participation & campagne</h2>
           {[
             ['FORM_FIRSTNAME', 'Demander le prénom'],
             ['FORM_LASTNAME', 'Demander le nom'],
@@ -187,6 +252,12 @@ export default function ReglagesPage() {
             <label className="label">Texte de consentement RGPD personnalisé (vide = texte par défaut)</label>
             <textarea className="input min-h-20" maxLength={400} value={val('FORM_RGPD_TEXT')}
               onChange={(e) => setSettings({ ...settings, FORM_RGPD_TEXT: e.target.value })} />
+          </div>
+          <div>
+            <label className="label" htmlFor="winmsg">Message de victoire (écran « gagné »)</label>
+            <input id="winmsg" className="input" maxLength={100} placeholder="Félicitations !"
+              value={val('WIN_MESSAGE')}
+              onChange={(e) => setSettings({ ...settings, WIN_MESSAGE: e.target.value })} />
           </div>
           <div>
             <label className="label" htmlFor="limitmode">Limite anti-abus</label>
@@ -215,7 +286,7 @@ export default function ReglagesPage() {
         </form>
 
         <form onSubmit={save} className="card space-y-4">
-          <h2 className="font-bold">Branding (page de jeu)</h2>
+          <h2 className="font-bold">🎨 Branding (page de jeu)</h2>
           <div>
             <label className="label">Logo (affiché au-dessus du titre)</label>
             <div className="flex items-center gap-3">
@@ -250,6 +321,23 @@ export default function ReglagesPage() {
             {saved && <span className="text-sm text-emerald-600">✓ Enregistré</span>}
           </div>
         </form>
+      </div>
+
+      {/* 📱 QR codes + ✉️ Notifications : renvois vers les bons écrans */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="card space-y-2">
+          <h2 className="font-bold">📱 QR codes</h2>
+          <p className="text-sm text-gray-500">Créez un QR par emplacement (caisse, comptoir…), téléchargez les visuels d'impression et testez le parcours.</p>
+          <a href={`/${companySlug}/qr-codes`} className="inline-block text-sm font-semibold text-brand-600 hover:underline">Gérer mes QR codes →</a>
+        </div>
+        <div className="card space-y-2">
+          <h2 className="font-bold">✉️ Notifications</h2>
+          <p className="text-sm text-gray-500">
+            L'envoi des e-mails (validation joueurs, codes admins) est géré de façon centrale par la plateforme.
+            Le logo et l'expéditeur visible par vos clients se règlent dans « Branding » et « Avis ».
+          </p>
+          <p className="text-xs text-gray-400">Les notifications SMS arrivent bientôt.</p>
+        </div>
       </div>
 
       <div className="card !p-4 text-sm text-gray-600">

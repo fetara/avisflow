@@ -63,9 +63,56 @@ export default async function Dashboard({ params, searchParams }) {
   const maxRating = Math.max(1, ...ratingDist.map((r) => r._count._all));
   const totalWeight = prizes.filter((p) => p.active).reduce((s, p) => s + p.weight, 0) || 1;
 
+  // KPIs orientés valeur commerçant : mois courant vs mois précédent
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const inRange = (d, a, b) => d >= a && d < b;
+
+  // Agrégats via requêtes dédiées (compteurs fiables par période)
+  const [spinsMonth, spinsPrevMonth, reviewsMonth, reviewsPrevMonth] = await Promise.all([
+    db.spin.count({ where: { customer: { companyId }, createdAt: { gte: monthStart } } }),
+    db.spin.count({ where: { customer: { companyId }, createdAt: { gte: prevMonthStart, lt: monthStart } } }),
+    db.review.count({ where: { customer: { companyId }, createdAt: { gte: monthStart } } }),
+    db.review.count({ where: { customer: { companyId }, createdAt: { gte: prevMonthStart, lt: monthStart } } }),
+  ]);
+  const growth = (cur, prev) => (prev === 0 ? (cur > 0 ? 100 : 0) : Math.round(((cur - prev) / prev) * 100));
+  const spinsGrowth = growth(spinsMonth, spinsPrevMonth);
+  const reviewsGrowth = growth(reviewsMonth, reviewsPrevMonth);
+  const conversion = spins > 0 ? Math.round((reviews / spins) * 100) : 0;
+
+  // Meilleur QR : part des scans sur les 30 derniers jours
+  const best = qrs.length > 0
+    ? qrs.reduce((a, b) => (b._count.scans > a._count.scans ? b : a))
+    : null;
+  const totalScans = qrs.reduce((s2, q) => s2 + q._count.scans, 0);
+  const bestShare = best && totalScans > 0 ? Math.round((best._count.scans / totalScans) * 100) : 0;
+
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Tableau de bord</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Votre activité avec AvisFlow</h1>
+        <a href={`/${companySlug}/play`} target="_blank" rel="noopener noreferrer"
+          className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
+          👁️ Voir ce que voit mon client
+        </a>
+      </div>
+
+      {/* KPIs commerçant */}
+      <section aria-label="Indicateurs du mois">
+        <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">📊 Ce mois-ci</p>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <FunnelCard label="Clients engagés" value={spinsMonth} hint={`${spinsGrowth >= 0 ? '+' : ''}${spinsGrowth} % vs mois dernier`} accent={spinsGrowth >= 0 ? 'text-emerald-600' : 'text-red-500'} />
+          <FunnelCard label="⭐ Avis obtenus" value={reviewsMonth} hint={`${reviewsGrowth >= 0 ? '+' : ''}${reviewsGrowth} % vs mois dernier`} accent={reviewsGrowth >= 0 ? 'text-emerald-600' : 'text-red-500'} />
+          <FunnelCard label="🎁 Récompenses distribuées" value={spins} hint={`depuis le lancement`} />
+          <FunnelCard label="Taux de conversion" value={`${conversion} %`} hint="parties -> avis déposés" accent="text-brand-600" />
+        </div>
+        {best && totalScans > 0 && (
+          <p className="mt-3 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+            💡 <strong>Votre meilleur QR code :</strong> <span className="font-mono font-semibold">{best.slug}</span> — {bestShare} % des scans.
+          </p>
+        )}
+      </section>
 
       {/* Entonnoir global */}
       <section>

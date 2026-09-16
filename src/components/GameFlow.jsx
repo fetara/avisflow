@@ -9,7 +9,7 @@ function Stars({ n }) {
   return <span className="text-amber-400">{'★'.repeat(n)}<span className="text-gray-300">{'★'.repeat(5 - n)}</span></span>;
 }
 
-export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null, companySlug = null, brand = { logo: null, color: null }, formCfg = { firstName: true, lastName: true, phone: true, rgpdText: null }, testMode = false, testToken = null }) {
+export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null, companySlug = null, brand = { logo: null, color: null }, formCfg = { firstName: true, lastName: true, phone: true, rgpdText: null }, testMode = false, testToken = null, winMessage = null }) {
   const searchParams = useSearchParams();
   const [step, setStep] = useState(testMode ? 'wheel' : (initial.step || 'identify'));
   const [spin, setSpin] = useState(initial.spin);
@@ -227,7 +227,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
             {soundOn ? '🔊' : '🔇'}
           </button>
           <div className="animate-bounce text-7xl" aria-hidden="true">🎉</div>
-          <h2 className="mt-3 text-3xl font-extrabold">Félicitations !</h2>
+          <h2 className="mt-3 text-3xl font-extrabold">{winMessage || 'Félicitations !'}</h2>
           <p className="mt-1 text-gray-600">Vous avez gagné :</p>
           {spin.photo && (
             // eslint-disable-next-line @next/next/no-img-element

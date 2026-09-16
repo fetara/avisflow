@@ -14,6 +14,7 @@ const ALLOWED_KEYS = [
   'WHEEL_COLORS',
   'WHEEL_BG_IMAGE',
   // Formulaire joueurs & anti-abus
+  'WIN_MESSAGE',
   'FORM_FIRSTNAME', 'FORM_LASTNAME', 'FORM_PHONE', 'FORM_RGPD_TEXT',
   'SPIN_LIMIT_MODE',
   // Campagne
@@ -28,6 +29,7 @@ const VALUE_LIMITS = {
   WHEEL_BG_IMAGE: 3_000_000, // data URL de l'image de fond
   BRAND_LOGO: 2_000_000, // data URL du logo
   FORM_RGPD_TEXT: 2_000, // texte de consentement personnalisé
+  WIN_MESSAGE: 200, // message affiché à l'écran de victoire
 };
 
 // Entreprise cible des réglages :

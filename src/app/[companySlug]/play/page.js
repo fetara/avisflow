@@ -86,6 +86,7 @@ export default async function PlayPage({ params, searchParams }) {
     let wheelBg = null;
     let brand = { logo: null, color: null };
     let formCfg = { firstName: true, lastName: true, phone: true, rgpdText: null };
+    let winMessage = null;
     try {
       const cs = await getCompanySettings(company.id);
       wheelColors = JSON.parse(cs.WHEEL_COLORS || 'null');
@@ -97,6 +98,7 @@ export default async function PlayPage({ params, searchParams }) {
         phone: cs.FORM_PHONE !== 'false',
         rgpdText: cs.FORM_RGPD_TEXT || null,
       };
+      winMessage = cs.WIN_MESSAGE || null;
     } catch { /* config invalide -> défauts */ }
 
     // Mode TEST admin : ?test=TOKEN (signé, vérifié côté serveur au tirage)
@@ -106,7 +108,7 @@ export default async function PlayPage({ params, searchParams }) {
       src={searchParams?.src || ''} companySlug={company.slug} err=""
       companyName={company.name} headline={headline} sub={sub}
       wheelColors={wheelColors} wheelBg={wheelBg}
-      brand={brand} formCfg={formCfg}
+      brand={brand} formCfg={formCfg} winMessage={winMessage}
       testMode={Boolean(testToken)} testToken={testToken} />;
   } catch (e) {
     return <NotReady companyName={company.name} />;
