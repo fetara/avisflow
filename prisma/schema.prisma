@@ -43,6 +43,7 @@ model Company {
   twoFactorEnabled Boolean @default(true)
   // Visible publiquement sur la vitrine (entreprises participantes)
   isPublic Boolean @default(true)
+  subscriptions Subscription[]
   admins    Admin[]
   qrCodes   QrCode[]
   prizes    Prize[]
@@ -176,6 +177,68 @@ model Review {
 model Setting {
   key   String @id
   value String
+}
+
+// ---------- Abonnements SaaS ----------
+enum SubscriptionStatus {
+  PENDING
+  APPROVED
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  CANCELLED
+  REJECTED
+}
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  priceMonthly Decimal?
+  priceYearly  Decimal?
+  currency    String   @default("EUR")
+  active      Boolean  @default(true)
+  // Limites : null = illimité
+  maxQrCodes  Int?
+  maxCustomers Int?
+  maxSpins    Int?
+  // Fonctionnalités du plan (JSON : { campaigns: true, ... })
+  features    Json?
+  // Délai d'activation après validation (jours) — modifiable sans code
+  activationDelayDays Int @default(0)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id         String @id @default(cuid())
+  companyId  String
+  company    Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  planId     String
+  plan       SubscriptionPlan @relation(fields: [planId], references: [id])
+  status     SubscriptionStatus @default(PENDING)
+  startAt    DateTime?
+  endAt      DateTime?
+  requestedAt DateTime @default(now())
+  approvedAt DateTime?
+  activatedAt DateTime?
+  // Délai appliqué lors de la validation (historique)
+  activationDelayDays Int?
+  // Snapshot du prix au moment de la souscription (les changements de prix
+  // du plan ne modifient jamais rétroactivement un abonnement existant)
+  priceMonthly Decimal?
+  currency     String  @default("EUR")
+  // Paiement : "MANUAL" pour l'instant (compatible future intégration Stripe)
+  paymentStatus String @default("MANUAL")
+  approvedBy   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([companyId, status])
+  @@index([status, activatedAt])
 }
 
 // Configuration serveur PERSISTANTE (survit aux déploiements, contrairement au .env)

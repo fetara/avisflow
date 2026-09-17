@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { requirePermission, companyScope, logAction, logCrossAttempt } from '@/lib/admin-guard';
 import { slugify } from '@/lib/utils';
+import { canCreateQrCode } from '@/lib/subscription';
 
 const qrSchema = z.object({
   label: z.string().trim().min(1).max(60),
@@ -57,6 +58,10 @@ export async function POST(req) {
   const parsed = qrSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'QR code invalide.' }, { status: 400 });
   const { label, slug, destination, active, expiresAt } = parsed.data;
+
+  // Limite du plan d'abonnement (côté serveur, jamais contournable par le front)
+  const gate = await canCreateQrCode(guard.companyId);
+  if (!gate.ok) return NextResponse.json({ error: gate.reason, upgrade: true }, { status: 403 });
 
   // Slug unique DANS l'entreprise (suffixe numérique automatique en collision)
   const base = slugify(slug || label);

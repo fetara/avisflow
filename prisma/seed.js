@@ -63,6 +63,28 @@ async function main() {
   console.log('QR codes de démo créés :', demoQrs.map((q) => `/r/${q.slug}`).join(', '));
 }
 
+// Plans d'abonnement initiaux (upserts : jamais écrasés au redéploiement)
+  const plans = [
+    { name: 'Starter', slug: 'starter', priceMonthly: 29, maxQrCodes: 1, maxCustomers: 500, maxSpins: null,
+      activationDelayDays: 1, sortOrder: 1,
+      features: ['QR code', 'Roue personnalisable', 'Récompenses & stocks', 'Avis + modération', 'Statistiques essentielles', 'Export CSV clients'] },
+    { name: 'Business', slug: 'business', priceMonthly: 59, maxQrCodes: 10, maxCustomers: 2000, maxSpins: null,
+      activationDelayDays: 2, sortOrder: 2,
+      features: ['Tout Starter', '10 QR codes', 'Statistiques avancées', 'Gestion des gagnants', 'Campagnes datées', 'Export CSV clients'] },
+    { name: 'Premium', slug: 'premium', priceMonthly: 99, maxQrCodes: null, maxCustomers: null, maxSpins: null,
+      activationDelayDays: 3, sortOrder: 3,
+      features: ['QR codes illimités', 'Clients illimités', 'Statistiques avancées', 'Support prioritaire', 'Multi-établissements'] },
+  ];
+  for (const plan of plans) {
+    await prisma.subscriptionPlan.upsert({
+      where: { slug: plan.slug },
+      update: {}, // ne modifie jamais un plan déjà ajusté par le super admin
+      create: { ...plan, description: null, priceYearly: null, features: plan.features },
+    });
+  }
+  console.log('Plans d'abonnement initiaux :', plans.length);
+}
+
 main()
   .catch((e) => { console.error(e); process.exit(1); })
   .finally(() => prisma.$disconnect());

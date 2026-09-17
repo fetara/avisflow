@@ -129,3 +129,31 @@ export async function sendLoginCode(to, code) {
 
 export { APP_URL_CACHE as APP_URL };
 
+
+// ---------- Notifications d'abonnement (réutilisent l'infrastructure Brevo/Resend) ----------
+export async function sendSubscriptionReceived(to, planName) {
+  await sendMail(to, 'Votre demande d’abonnement a bien été reçue',
+    layout('Demande reçue', `<p>Bonjour,</p>
+      <p>Votre demande d’abonnement <strong>${planName}</strong> a bien été enregistrée.</p>
+      <p>Notre équipe va la valider. Vous recevrez un e-mail dès l’approbation.</p>`));
+}
+
+export async function sendSubscriptionApproved(to, planName, activatedAt) {
+  const when = activatedAt ? `Activation prévue le <strong>${new Date(activatedAt).toLocaleDateString('fr-FR')}</strong>.` : 'Votre abonnement est actif immédiatement.';
+  await sendMail(to, `Votre abonnement ${planName} a été approuvé`,
+    layout('Abonnement approuvé', `<p>Bonjour,</p>
+      <p>Votre abonnement <strong>${planName}</strong> a été approuvé.</p><p>${when}</p>`));
+}
+
+export async function sendSubscriptionActivated(to, planName) {
+  await sendMail(to, 'Votre abonnement est maintenant actif',
+    layout('Abonnement actif', `<p>Bonjour,</p>
+      <p>Votre abonnement <strong>${planName}</strong> est désormais <strong>actif</strong>. Bonne route !</p>`));
+}
+
+export async function sendSubscriptionExpired(to, planName) {
+  await sendMail(to, 'Votre abonnement a expiré',
+    layout('Abonnement expiré', `<p>Bonjour,</p>
+      <p>Votre abonnement <strong>${planName}</strong> a expiré. Vos données sont conservées :
+      contactez-nous pour le renouveler et reprendre là où vous étiez.</p>`));
+}

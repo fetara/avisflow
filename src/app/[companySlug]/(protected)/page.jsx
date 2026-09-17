@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
+import SubscriptionCard from './SubscriptionCard';
 import BarChart from '@/components/BarChart';
 
 export const dynamic = 'force-dynamic';
@@ -97,6 +98,9 @@ export default async function Dashboard({ params, searchParams }) {
           👁️ Voir ce que voit mon client
         </a>
       </div>
+
+      {/* 💳 Abonnement */}
+      <SubscriptionCard companyId={session.companyId} companySlug={companySlug} />
 
       {/* KPIs commerçant */}
       <section aria-label="Indicateurs du mois">

@@ -6,6 +6,7 @@ import { randomToken, sha256 } from '@/lib/utils';
 import { rateLimit } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/utils';
 import { getCompanySettings, getAppUrl } from '@/lib/db';
+import { canAddCustomer } from '@/lib/subscription';
 
 // Prénom/nom/téléphone sont rendus optionnels AU NIVEAU ZOD : c'est la configuration
 // de l'entreprise (FORM_* dans CompanySetting) qui impose ou non les champs côté serveur.
@@ -59,6 +60,12 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Formulaire incomplet.' }, { status: 400 });
   }
 
+  // Limite de clients du plan d'abonnement de l'entreprise (côté serveur)
+  if (companyId) {
+    const gate = await canAddCustomer(companyId);
+    if (!gate.ok) return NextResponse.json({ error: gate.reason }, { status: 403 });
+  }
+
   // Un seul tour par e-mail ET PAR ENTREPRISE : déjà validé chez ce commerçant ?
   const existing = await db.customer.findFirst({ where: { email, companyId } });
   if (existing?.emailVerifiedAt) {
@@ -73,7 +80,7 @@ export async function POST(req) {
       tokenHash: sha256(token),
       type: 'CUSTOMER_VERIFY',
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
-      payload: JSON.stringify({ firstName, lastName, email, phone: phone || null, consentAt: new Date().toISOString(), sourceQrId, companyId, firstName: firstName || '', lastName: lastName || '' }),
+      payload: JSON.stringify({ firstName: firstName || '', lastName: lastName || '', email, phone: phone || null, consentAt: new Date().toISOString(), sourceQrId, companyId }),
     },
   });
 

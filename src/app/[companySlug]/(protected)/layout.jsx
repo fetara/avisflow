@@ -17,6 +17,7 @@ const NAV = [
   { href: '/lots', label: 'Lots', icon: '🎁', perm: 'manage_prizes' },
   { href: '/qr-codes', label: 'QR codes', icon: '📱', perm: 'manage_qrcodes' },
   { href: '/reglages', label: 'Réglages', icon: '⚙️', perm: 'configure_wheel' },
+  { href: '/abonnement', label: 'Abonnement', icon: '💳' },
 ];
 
 // Page d'erreur dédiée : slug invalide ou entreprise désactivée

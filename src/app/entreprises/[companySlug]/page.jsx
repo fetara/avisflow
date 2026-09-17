@@ -32,28 +32,41 @@ export default async function AvisEntreprisePage({ params, searchParams }) {
   const { companySlug } = await params;
   const page = Math.max(1, parseInt(searchParams?.page || '1', 10));
 
-  const company = await db.company.findUnique({ where: { slug: companySlug } });
-  // Seules les entreprises actives et publiques sont consultables
-  if (!company || !company.active || !company.isPublic) {
-    return <ErrorPage title="Entreprise introuvable" message="Cette entreprise n'existe pas ou n'est pas visible publiquement." />;
-  }
+  let company = null;
+  let reviews = [];
+  let total = 0;
+  let avg = null;
+  let logo = null;
+  try {
+    company = await db.company.findUnique({ where: { slug: companySlug } });
+    // Seules les entreprises actives et publiques sont consultables
+    if (!company || !company.active || !company.isPublic) {
+      return <ErrorPage title="Entreprise introuvable" message="Cette entreprise n'existe pas ou n'est pas visible publiquement." />;
+    }
 
-  // Avis APPROUVÉS uniquement (statut de modération respecté), paginés
-  const where = { status: 'approved', customer: { companyId: company.id, anonymizedAt: null } };
-  const [reviews, total, agg, settings] = await Promise.all([
-    db.review.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * PER_PAGE,
-      take: PER_PAGE,
-      select: { rating: true, comment: true, photo: true, createdAt: true, customer: { select: { firstName: true } } },
-    }),
-    db.review.count({ where }),
-    db.review.aggregate({ where, _avg: { rating: true }, _count: { _all: true } }),
-    db.companySetting.findMany({ where: { companyId: company.id, key: 'BRAND_LOGO' }, select: { value: true } }),
-  ]);
-  const logo = settings[0]?.value || null;
-  const pages = Math.max(1, Math.ceil(total / PER_PAGE));
+    // Avis APPROUVÉS uniquement (statut de modération respecté), paginés
+    const where = { status: 'approved', customer: { companyId: company.id, anonymizedAt: null } };
+    const [revs, tot, agg, settings] = await Promise.all([
+      db.review.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * PER_PAGE,
+        take: PER_PAGE,
+        select: { id: true, rating: true, comment: true, photo: true, createdAt: true, customer: { select: { firstName: true } } },
+      }),
+      db.review.count({ where }),
+      db.review.aggregate({ where, _avg: { rating: true }, _count: { _all: true } }),
+      db.companySetting.findMany({ where: { companyId: company.id, key: 'BRAND_LOGO' }, select: { value: true } }),
+    ]);
+    reviews = revs;
+    total = tot;
+    avg = agg._avg.rating;
+    logo = settings[0]?.value || null;
+  } catch (e) {
+    // Base pas à jour ou indisponible : page d'erreur propre au lieu d'un crash
+    console.error('avis entreprise:', e.message?.slice(0, 200));
+    return <ErrorPage title="Avis indisponibles" message="Une erreur technique empêche l'affichage des avis. Réessayez dans un instant." />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -74,11 +87,11 @@ export default async function AvisEntreprisePage({ params, searchParams }) {
           <div className="flex-1">
             <h1 className="text-2xl font-extrabold">{company.name}</h1>
             <p className="mt-1">
-              {agg._count._all > 0 ? (
+              {total > 0 ? (
                 <>
-                  <Stars rating={agg._avg.rating || 0} />{' '}
-                  <span className="font-bold">{(agg._avg.rating || 0).toFixed(1).replace('.', ',')}</span> / 5
-                  <span className="text-gray-500"> — {agg._count._all} avis</span>
+                  <Stars rating={avg || 0} />{' '}
+                  <span className="font-bold">{(avg || 0).toFixed(1).replace('.', ',')}</span> / 5
+                  <span className="text-gray-500"> — {total} avis</span>
                 </>
               ) : (
                 <span className="text-gray-400">Pas encore d’avis</span>

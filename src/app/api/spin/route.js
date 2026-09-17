@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { giftCode } from '@/lib/utils';
 import { getPlayerSession } from '@/lib/auth';
 import { getCompanySetting } from '@/lib/db';
+import { canAddSpin } from '@/lib/subscription';
 
 function weightedPick(prizes) {
   const pool = prizes.filter((p) => p.active && (p.stock === null || p.stock > 0));
@@ -33,6 +34,12 @@ export async function POST(req) {
   const already = await db.spin.findFirst({ where: spinWhere });
   if (already) {
     return NextResponse.json({ error: 'Vous avez déjà joué.', already: true, prizeId: already.prizeId }, { status: 409 });
+  }
+
+  // Limite de participations du plan (mensuelle, côté serveur)
+  if (customer.companyId) {
+    const gate = await canAddSpin(customer.companyId);
+    if (!gate.ok) return NextResponse.json({ error: gate.reason }, { status: 403 });
   }
 
   const prizes = await db.prize.findMany({ where: { companyId: customer.companyId }, orderBy: { sortOrder: 'asc' } });
