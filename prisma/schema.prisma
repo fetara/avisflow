@@ -33,11 +33,11 @@ model Admin {
 model Company {
   id        String   @id @default(cuid())
   name      String
-  slug      String
+  slug      String   @unique
   // Informations publiques de l'entreprise (éditables dans Réglages)
   address   String?
   phone     String?
-  website   String?   @unique
+  website   String?
   active    Boolean  @default(true)
   // 2FA imposée au niveau entreprise (false = 2FA ignorée pour tous ses admins)
   twoFactorEnabled Boolean @default(true)
