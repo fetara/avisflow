@@ -18,6 +18,8 @@ export default function SuperAdminPage() {
   const [form, setForm] = useState({ name: '', adminEmail: '', adminPassword: '' });
   const [permEdit, setPermEdit] = useState(null); // { company, selected:Set }
   const [totpView, setTotpView] = useState(null); // { company, otpauthUrl, secret }
+  const [subEdit, setSubEdit] = useState(null); // { company, planSlug, months, price, activateNow }
+  const [planOptions, setPlanOptions] = useState([]);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -81,6 +83,41 @@ export default function SuperAdminPage() {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ isPublic: !c.isPublic }),
     });
+    load();
+  }
+
+  // Gestion simplifiée de l'abonnement d'une entreprise
+  async function openSubEdit(c) {
+    const res = await fetch('/api/super/plans');
+    const data = await res.json().catch(() => ({}));
+    const options = (data.plans || []).filter((p) => p.active);
+    setPlanOptions(options);
+    const price = options.find((p) => p.slug === c.subscription?.plan?.toLowerCase())?.priceMonthly;
+    setSubEdit({
+      company: c,
+      planSlug: options.find((p) => p.name === c.subscription?.plan)?.slug || options[0]?.slug || '',
+      months: 12,
+      price: price ?? '',
+      activateNow: true,
+    });
+  }
+
+  async function saveSubEdit() {
+    const res = await fetch('/api/super/subscriptions', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'assign',
+        companyId: subEdit.company.id,
+        planSlug: subEdit.planSlug,
+        months: Number(subEdit.months) || 12,
+        price: subEdit.price === '' ? null : Number(subEdit.price),
+        activateNow: subEdit.activateNow,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { show(data.error || 'Erreur', 'error'); return; }
+    setSubEdit(null);
+    show(`Abonnement attribué à ${subEdit.company.name} ✓`);
     load();
   }
 
@@ -182,7 +219,7 @@ export default function SuperAdminPage() {
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-950 text-xs uppercase text-gray-500">
             <tr>
-              <th className="p-3">Entreprise</th><th className="p-3">Statut</th><th className="p-3">Vitrine</th><th className="p-3">Admin(s)</th>
+              <th className="p-3">Entreprise</th><th className="p-3">Statut</th><th className="p-3">Vitrine</th><th className="p-3">Abonnement</th><th className="p-3">Admin(s)</th>
               <th className="p-3">QR</th><th className="p-3">Lots</th><th className="p-3">Clients</th><th className="p-3">Parties</th><th className="p-3">TOTP</th>
               <th className="p-3">Actions</th>
             </tr>
@@ -199,6 +236,18 @@ export default function SuperAdminPage() {
                     className={`rounded-full px-2.5 py-1 text-xs font-semibold ${c.active ? 'bg-emerald-500/15 text-emerald-400' : 'bg-gray-700 text-gray-400'}`}>
                     {c.active ? '● active' : '○ désactivée'}
                   </button>
+                </td>
+                <td className="p-3">
+                  {c.subscription ? (
+                    <button onClick={() => openSubEdit(c)} title="Gérer l'abonnement"
+                      className="text-left text-xs leading-tight hover:underline">
+                      <span className="block font-semibold text-gray-200">{c.subscription.plan}</span>
+                      <span className={`block ${c.subscription.status === 'ACTIVE' ? 'text-emerald-400' : 'text-amber-400'}`}>{c.subscription.status}</span>
+                      {c.subscription.endAt && <span className="block text-gray-500">jusqu'au {new Date(c.subscription.endAt).toLocaleDateString('fr-FR')}</span>}
+                    </button>
+                  ) : (
+                    <button onClick={() => openSubEdit(c)} className="rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-400 hover:bg-amber-500/30">＋ Attribuer</button>
+                  )}
                 </td>
                 <td className="p-3">
                   <button onClick={() => togglePublic(c)} title="Visible sur la page d'accueil publique"
@@ -239,7 +288,7 @@ export default function SuperAdminPage() {
               </tr>
             ))}
             {companies.length === 0 && (
-              <tr><td colSpan={11} className="p-6 text-center text-gray-500">Aucune entreprise. Créez la première ci-dessus.</td></tr>
+              <tr><td colSpan={12} className="p-6 text-center text-gray-500">Aucune entreprise. Créez la première ci-dessus.</td></tr>
             )}
           </tbody>
         </table>
@@ -290,6 +339,52 @@ export default function SuperAdminPage() {
           </div>
         </div>
       )}
+      {/* Modale attribution d'abonnement */}
+      {subEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setSubEdit(null)}>
+          <div className="w-full max-w-md rounded-2xl bg-gray-900 p-6 text-gray-100 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold">💳 Abonnement — {subEdit.company.name}</h3>
+            <p className="mt-1 text-xs text-gray-500">L’abonnement actif précédent sera annulé (conservé dans l’historique).</p>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="text-xs font-semibold uppercase text-gray-500" htmlFor="subPlan">Plan</label>
+                <select id="subPlan" className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm"
+                  value={subEdit.planSlug}
+                  onChange={(e) => {
+                    const opt = planOptions.find((p) => p.slug === e.target.value);
+                    setSubEdit({ ...subEdit, planSlug: e.target.value, price: opt?.priceMonthly ?? subEdit.price });
+                  }}>
+                  {planOptions.map((p) => (
+                    <option key={p.id} value={p.slug}>{p.name} — {p.priceMonthly == null ? 'sur devis' : `${Number(p.priceMonthly)}€/mois`}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold uppercase text-gray-500" htmlFor="subMonths">Durée (mois)</label>
+                  <input id="subMonths" type="number" min="1" className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm"
+                    value={subEdit.months} onChange={(e) => setSubEdit({ ...subEdit, months: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold uppercase text-gray-500" htmlFor="subPrice">Prix €/mois (option)</label>
+                  <input id="subPrice" type="number" min="0" className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm"
+                    value={subEdit.price ?? ''} onChange={(e) => setSubEdit({ ...subEdit, price: e.target.value })} />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" className="h-4 w-4 accent-amber-500" checked={subEdit.activateNow}
+                  onChange={(e) => setSubEdit({ ...subEdit, activateNow: e.target.checked })} />
+                Activer immédiatement (décochez pour respecter le délai du plan)
+              </label>
+            </div>
+            <div className="mt-5 flex gap-2">
+              <button onClick={saveSubEdit} className="flex-1 rounded-lg bg-amber-500 py-2 text-sm font-bold text-gray-900 hover:bg-amber-400">Enregistrer</button>
+              <button onClick={() => setSubEdit(null)} className="rounded-lg border border-gray-700 px-4 py-2 text-sm hover:bg-gray-800">Annuler</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modale QR code TOTP */}
       {totpView && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setTotpView(null)}>

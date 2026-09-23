@@ -26,6 +26,20 @@ export async function GET(req) {
     },
   });
 
+  // Abonnement courant de chaque entreprise (plan, statut, échéance)
+  const ids = companies.map((c) => c.id);
+  const activeSubs = ids.length > 0 ? await db.subscription.findMany({
+    where: { companyId: { in: ids }, status: { in: ['ACTIVE', 'APPROVED', 'PENDING', 'SUSPENDED'] } },
+    orderBy: { requestedAt: 'desc' },
+    include: { plan: { select: { name: true } } },
+  }) : [];
+  const subByCompany = {};
+  for (const sub of activeSubs) {
+    if (!subByCompany[sub.companyId]) {
+      subByCompany[sub.companyId] = { plan: sub.plan.name, status: sub.status, endAt: sub.endAt };
+    }
+  }
+
   // Parties jouées par entreprise (via le client rattaché)
   const spins = await db.spin.findMany({ select: { customer: { select: { companyId: true } } } });
   const spinsPerCompany = {};
@@ -42,6 +56,7 @@ export async function GET(req) {
       active: c.active,
       isPublic: c.isPublic !== false,
       twoFactorEnabled: c.twoFactorEnabled !== false,
+      subscription: subByCompany[c.id] || null,
       createdAt: c.createdAt,
       admins: c.admins.filter((a) => a.role === 'COMPANY_ADMIN'),
       totpConfigured: c.admins.some((a) => a.role === 'COMPANY_ADMIN' && a.totpSecret),

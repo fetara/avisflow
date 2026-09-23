@@ -18,6 +18,7 @@ const schema = z.object({
   consent: z.literal(true),
   sourceSlug: z.string().max(60).optional().or(z.literal('')),
   companySlug: z.string().max(80).optional().or(z.literal('')),
+  emailMarketingConsent: z.boolean().optional(),
 });
 
 // Étape 1 : identification du client + envoi de l'e-mail de validation.
@@ -31,7 +32,7 @@ export async function POST(req) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Formulaire invalide (consentement RGPD obligatoire).' }, { status: 400 });
   }
-  const { firstName, lastName, email, phone, consent, sourceSlug, companySlug } = parsed.data;
+  const { firstName, lastName, email, phone, consent, sourceSlug, companySlug, emailMarketingConsent } = parsed.data;
 
   // Entreprise du jeu : résolue depuis le QR scanné, sinon depuis le slug d'entreprise
   // de l'URL de jeu (/{slug}/play). Un joueur peut ainsi participer chez plusieurs commerces.

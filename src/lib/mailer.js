@@ -35,7 +35,7 @@ export async function mailConfig() {
 
 // Transport : Resend (HTTP) si clé présente, sinon SMTP (Brevo), sinon mode démo (log console).
 // Renvoie un détail du transport utilisé pour le diagnostic dans l'écran super admin.
-async function sendViaResend(cfg, to, subject, html) {
+async function sendViaResend(cfg, to, subject, html, replyTo) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -64,8 +64,10 @@ export async function resolveAppUrl() {
   return APP_URL_CACHE;
 }
 
-export async function sendMail(to, subject, html) {
+export async function sendMail(to, subject, html, opts = {}) {
   const c = await mailConfig();
+  // Expéditeur personnalisé (par entreprise) prioritaire sur la config globale
+  if (opts.from) c.from = opts.from;
   const demo = c.demo === 'true' || (!c.resendKey && !c.smtpHost);
   if (demo) {
     console.log(`[DEMO MAIL] to=${to} subject=${subject}`);

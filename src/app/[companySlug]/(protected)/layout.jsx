@@ -3,21 +3,27 @@ import Link from 'next/link';
 import { getAdminSession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { parsePermissions, ROLES } from '@/lib/permissions';
-import NavBar from '@/components/NavBar';
 import ThemeToggle from '@/components/ThemeToggle';
+import Sidebar from '@/components/Sidebar';
 
 export const dynamic = 'force-dynamic';
 
-// Navigation du backoffice, préfixée par le slug de l'entreprise
-const NAV = [
-  { href: '', label: 'Tableau de bord', icon: '📊', perm: null },
-  { href: '/avis', label: 'Avis', icon: '⭐', perm: 'moderate_reviews' },
-  { href: '/clients', label: 'Clients', icon: '👥', perm: 'view_customers' },
-  { href: '/gagnants', label: 'Gagnants', icon: '🏆', perm: 'view_customers' },
-  { href: '/lots', label: 'Lots', icon: '🎁', perm: 'manage_prizes' },
-  { href: '/qr-codes', label: 'QR codes', icon: '📱', perm: 'manage_qrcodes' },
-  { href: '/reglages', label: 'Réglages', icon: '⚙️', perm: 'configure_wheel' },
-  { href: '/abonnement', label: 'Abonnement', icon: '💳' },
+// Navigation du backoffice entreprise, organisée par sections (sidebar gauche)
+const SECTIONS = [
+  { title: 'Principal', items: [
+    { href: '', label: 'Tableau de bord', icon: '📊', perm: null },
+    { href: '/clients', label: 'Clients', icon: '👥', perm: 'view_customers' },
+    { href: '/avis', label: 'Avis', icon: '⭐', perm: 'moderate_reviews' },
+  ] },
+  { title: 'Engagement', items: [
+    { href: '/lots', label: 'Lots de la roue', icon: '🎁', perm: 'manage_prizes' },
+    { href: '/qr-codes', label: 'QR codes', icon: '📱', perm: 'manage_qrcodes' },
+    { href: '/gagnants', label: 'Gagnants', icon: '🏆', perm: 'view_customers' },
+  ] },
+  { title: 'Administration', items: [
+    { href: '/abonnement', label: 'Abonnement', icon: '💳', perm: null },
+    { href: '/reglages', label: 'Paramètres', icon: '⚙️', perm: 'configure_wheel' },
+  ] },
 ];
 
 // Page d'erreur dédiée : slug invalide ou entreprise désactivée
@@ -78,9 +84,37 @@ export default async function ProtectedCompanyLayout({ children, params }) {
   const base = `/${company.slug}`;
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 lg:pl-64">
+      <Sidebar
+        brand={company.name}
+        subtitle={isSuper ? `Vue super admin · /${company.slug}` : `/${company.slug}`}
+        sections={SECTIONS.map((sec) => ({
+          ...sec,
+          items: sec.items
+            .filter((it) => allowed(it.perm))
+            .map((it) => ({ ...it, href: `${base}${it.href}` })),
+        }))}
+        footer={
+          <>
+            {isSuper && (
+              <Link href="/super" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-amber-400 hover:bg-amber-500/10">
+                <span aria-hidden="true">🛡️</span> Espace super admin
+              </Link>
+            )}
+            <div className="flex items-center gap-2 px-2">
+              <ThemeToggle />
+              <Link href="/" className="rounded-lg px-2 py-2 text-xs text-gray-400 hover:bg-gray-800 hover:text-white">Site public</Link>
+            </div>
+            <form action="/api/admin/logout" method="post">
+              <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 hover:bg-red-500/10 hover:text-red-400">
+                <span aria-hidden="true">🚪</span> Déconnexion
+              </button>
+            </form>
+          </>
+        }
+      />
       {session.impersonatedBy && (
-        <div className="flex flex-wrap items-center justify-center gap-3 bg-amber-500 px-4 py-2 text-sm font-medium text-white">
+        <div className="relative z-20 flex flex-wrap items-center justify-center gap-3 bg-amber-500 px-4 py-2 text-sm font-medium text-white">
           <span>🕵️ Vue support — entreprise «&nbsp;{company.name}&nbsp;»</span>
           <form action="/api/super/impersonate/exit" method="post">
             <button className="rounded-lg bg-white px-3 py-1 font-semibold text-amber-700 hover:bg-amber-50">
@@ -89,22 +123,7 @@ export default async function ProtectedCompanyLayout({ children, params }) {
           </form>
         </div>
       )}
-      <NavBar
-        brand={`🎡 ${company.name}${isSuper ? ' · vue super admin' : ''}`}
-        items={NAV.filter((item) => allowed(item.perm)).map((item) => ({ href: `${base}${item.href}`, label: item.label, icon: item.icon }))}
-        actions={
-          <>
-            {isSuper && (
-              <Link href="/super" className="rounded-lg px-3 py-2.5 text-sm font-semibold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10">🛡️ Super admin</Link>
-            )}
-            <ThemeToggle />
-            <form action="/api/admin/logout" method="post">
-              <button className="rounded-lg px-3 py-2.5 text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:text-gray-400">Déconnexion</button>
-            </form>
-          </>
-        }
-      />
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-8 pt-16 lg:pt-8">{children}</main>
     </div>
   );
 }

@@ -49,9 +49,15 @@ export async function GET(req) {
 }
 
 const actionSchema = z.object({
-  id: z.string(),
-  action: z.enum(['approve', 'reject', 'suspend', 'activate_now', 'cancel', 'extend']),
+  id: z.string().optional(),
+  action: z.enum(['approve', 'reject', 'suspend', 'activate_now', 'cancel', 'extend', 'assign']),
   days: z.number().int().positive().optional(), // pour extend
+  // assign : création manuelle d'un abonnement pour une entreprise
+  companyId: z.string().optional(),
+  planSlug: z.string().optional(),
+  months: z.number().int().positive().optional(),
+  price: z.number().nonnegative().nullable().optional(),
+  activateNow: z.boolean().optional(),
 });
 
 // Actions super admin sur un abonnement. Toutes les dates sont calculées côté serveur.
@@ -62,6 +68,45 @@ export async function PATCH(req) {
   const parsed = actionSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Requête invalide.' }, { status: 400 });
   const { id, action, days } = parsed.data;
+
+  // --- Attribution manuelle (le super admin crée l'abonnement pour l'entreprise) ---
+  if (action === 'assign') {
+    if (!parsed.data.companyId || !parsed.data.planSlug) {
+      return NextResponse.json({ error: 'companyId et planSlug requis.' }, { status: 400 });
+    }
+    const plan = await db.subscriptionPlan.findUnique({ where: { slug: parsed.data.planSlug } });
+    if (!plan || !plan.active) return NextResponse.json({ error: 'Plan introuvable ou désactivé.' }, { status: 400 });
+
+    const companyId = parsed.data.companyId;
+    const months = parsed.data.months ?? 12;
+    const now2 = new Date();
+    const endAt = new Date(now2.getTime() + months * 30 * 864e5);
+
+    // L'abonnement actif/approuvé précédent est annulé (jamais supprimé : historique)
+    await db.subscription.updateMany({
+      where: { companyId, status: { in: ['ACTIVE', 'APPROVED', 'PENDING'] } },
+      data: { status: 'CANCELLED' },
+    });
+
+    const immediate = parsed.data.activateNow !== false;
+    const created = await db.subscription.create({
+      data: {
+        companyId,
+        planId: plan.id,
+        status: immediate ? 'ACTIVE' : 'APPROVED',
+        startAt: immediate ? now2 : null,
+        activatedAt: immediate ? now2 : new Date(now2.getTime() + (plan.activationDelayDays ?? 0) * 864e5),
+        endAt,
+        activationDelayDays: immediate ? 0 : plan.activationDelayDays,
+        priceMonthly: parsed.data.price != null ? parsed.data.price : plan.priceMonthly,
+        currency: plan.currency,
+        approvedBy: guard.admin.id,
+        approvedAt: now2,
+      },
+    });
+    await logAction(guard.admin.id, 'SUBSCRIPTION_ASSIGNED', 'Subscription', created.id);
+    return NextResponse.json({ ok: true, subscription: { ...created, priceMonthly: created.priceMonthly == null ? null : Number(created.priceMonthly) } });
+  }
 
   const sub = await db.subscription.findUnique({
     where: { id },

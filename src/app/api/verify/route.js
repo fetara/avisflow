@@ -33,6 +33,7 @@ export async function GET(req) {
         emailVerifiedAt: new Date(),
         sourceQrId: data.sourceQrId,
         companyId,
+        emailMarketingConsent: Boolean(data.emailMarketingConsent),
       },
     });
   }

@@ -49,6 +49,8 @@ model Company {
   prizes    Prize[]
   customers Customer[]
   settings  CompanySetting[]
+  emailTemplates EmailTemplate[]
+  campaigns Campaign[]
   createdAt DateTime @default(now())
 }
 
@@ -84,11 +86,15 @@ model Customer {
   phone      String?
   consentAt  DateTime
   emailVerifiedAt DateTime?
+  // Marketing (phase 2) : consentement séparé + désinscription
+  emailMarketingConsent Boolean @default(false)
+  emailOptedOutAt DateTime?
   sourceQrId String?
   sourceQr   QrCode?   @relation(fields: [sourceQrId], references: [id], onDelete: SetNull)
   anonymizedAt DateTime?
   spins      Spin[]
   reviews    Review[]
+  campaignRecipients CampaignRecipient[]
   createdAt  DateTime  @default(now())
 
   // Un e-mail est unique PAR entreprise (le même client peut jouer chez plusieurs commerces)
@@ -239,6 +245,56 @@ model Subscription {
 
   @@index([companyId, status])
   @@index([status, activatedAt])
+}
+
+// ---------- Marketing : templates + campagnes email (phase 2) ----------
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  key       String   // welcome | win | review_request | promo | custom
+  name      String
+  subject   String
+  body      String   // texte/HTML avec variables {{firstName}}, {{companyName}}…
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, key])
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  subject     String
+  body        String
+  segment     String   @default("all") // all | reviewed | not_reviewed | won | inactive30
+  status      String   @default("DRAFT") // DRAFT | SCHEDULED | SENDING | SENT | CANCELLED | FAILED
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  sentCount   Int      @default(0)
+  failedCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  recipients  CampaignRecipient[]
+
+  @@index([companyId, status])
+}
+
+model CampaignRecipient {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  email      String
+  status     String   @default("PENDING") // PENDING | SENT | FAILED
+  error      String?
+  sentAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  @@unique([campaignId, customerId])
 }
 
 // Configuration serveur PERSISTANTE (survit aux déploiements, contrairement au .env)

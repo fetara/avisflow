@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import { useParams } from 'next/navigation';
 
 import { useEffect, useState } from 'react';
@@ -336,6 +338,9 @@ export default function ReglagesPage() {
             L'envoi des e-mails (validation joueurs, codes admins) est géré de façon centrale par la plateforme.
             Le logo et l'expéditeur visible par vos clients se règlent dans « Branding » et « Avis ».
           </p>
+          <Link href={`/${companySlug}/emails`} className="mt-2 inline-block text-sm font-semibold text-brand-600 hover:underline">
+            Configurer l'e-mail et les templates →
+          </Link>
           <p className="text-xs text-gray-400">Les notifications SMS arrivent bientôt.</p>
         </div>
       </div>

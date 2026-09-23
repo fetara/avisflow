@@ -3,7 +3,12 @@ import { getUsage } from '@/lib/subscription';
 
 // Barres d'utilisation vs limites du plan (composant serveur, via la lib centralisée).
 export default async function Usage({ companyId }) {
-  const data = await getUsage(companyId);
+  let data = null;
+  try {
+    data = await getUsage(companyId);
+  } catch {
+    return <p className="text-sm text-amber-600">Utilisation indisponible (migration d’abonnement à appliquer).</p>;
+  }
   if (!data) return null;
   const { usage, plan } = data;
 
