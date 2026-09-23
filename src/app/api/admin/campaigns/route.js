@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { requireAdmin, logAction } from '@/lib/admin-guard';
 import { resolveCompanyId } from '@/lib/company-scope';
-import { SEGMENTS, resolveSegment, seedRecipients } from '@/lib/email-campaigns';
+import { SEGMENTS, resolveSegment, seedRecipients, processCampaignBatch } from '@/lib/email-campaigns';
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -60,10 +60,24 @@ export async function POST(req) {
   await seedRecipients(campaign.id, companyId, segment);
   await logAction(guard.admin.id, 'CAMPAIGN_CREATED', 'Campaign', campaign.id);
 
+  // Hobby (pas de cron 5 min) : on traite jusqu'à 10 lots (~250 e-mails) immédiatement.
+  // Au-delà, le cron quotidien ou un déclencheur externe termine l'envoi.
+  let sentNow = 0;
+  for (let i = 0; i < 10; i++) {
+    const r = await processCampaignBatch(campaign.id, 25);
+    sentNow += r.processed;
+    if (r.done) break;
+  }
+  const remaining = await db.campaignRecipient.count({ where: { campaignId: campaign.id, status: 'PENDING' } });
+
   return NextResponse.json({
     ok: true,
     campaign,
     recipients: recipients.length,
-    note: 'L’envoi est traité par lots (25 e-mails par passage). Le cron termine l’envoi ; seuls les clients avec consentement e-mail reçoivent la campagne.',
+    sentNow,
+    remaining,
+    note: remaining > 0
+      ? `${sentNow} e-mails envoyés maintenant ; ${remaining} restants seront traités par le cron quotidien ou un déclencheur externe.`
+      : `Campaign envoyée (${sentNow} e-mails).`,
   });
 }

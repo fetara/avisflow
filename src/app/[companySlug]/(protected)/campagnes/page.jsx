@@ -48,7 +48,10 @@ export default function CampagnesPage() {
     const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) { show(data.error || 'Erreur', 'error'); return; }
-    show(`Campagne créée — ${data.recipients} destinataire(s) qualifié(s). Envoi par lots en cours.`);
+    const detail = data.remaining > 0
+      ? `${data.sentNow} envoyés maintenant, ${data.remaining} restants (cron quotidien ou externe).`
+      : `${data.sentNow} envoyés.`;
+    show(`Campagne créée — ${data.recipients} destinataire(s) qualifié(s). ${detail}`);
     setForm({ name: '', subject: '', body: '', segment: 'all', when: 'now', scheduledAt: '' });
     // Traite immédiatement un premier lot (le cron termine le reste)
     if (data.campaign?.id) {
