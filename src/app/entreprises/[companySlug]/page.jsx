@@ -37,6 +37,7 @@ export default async function AvisEntreprisePage({ params, searchParams }) {
   let total = 0;
   let avg = null;
   let logo = null;
+  let pages = 1;
   try {
     company = await db.company.findUnique({ where: { slug: companySlug } });
     // Seules les entreprises actives et publiques sont consultables
@@ -62,6 +63,8 @@ export default async function AvisEntreprisePage({ params, searchParams }) {
     total = tot;
     avg = agg._avg.rating;
     logo = settings[0]?.value || null;
+    // Pagination : nombre de pages total (utilisé par le bloc navigation en bas de page)
+    pages = Math.max(1, Math.ceil(total / PER_PAGE));
   } catch (e) {
     // Base pas à jour ou indisponible : page d'erreur propre au lieu d'un crash
     console.error('avis entreprise:', e.message?.slice(0, 200));
