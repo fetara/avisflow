@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { processCampaignBatch } from '@/lib/email-campaigns';
 
+// Jamais prérendu : route dynamique (cron / query params) — accède à la base
+export const dynamic = 'force-dynamic';
+
 // Cron : traite les campagnes programmées / en cours, par lots de 25.
 // Idempotent — peut être appelé aussi souvent que nécessaire.
 // Sécurisé par CRON_SECRET (Vercel envoie Authorization: Bearer $CRON_SECRET).

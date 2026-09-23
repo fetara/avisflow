@@ -1,0 +1,101 @@
+  ▲ Next.js 14.2.35
+  - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/52) ...
+   Generating static pages (13/52) 
+   Generating static pages (26/52) 
+   Generating static pages (39/52) 
+ ✓ Generating static pages (52/52)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                Size     First Load JS
+┌ ƒ /                                      1.1 kB         97.1 kB
+├ ○ /_not-found                            873 B          88.1 kB
+├ ƒ /[companySlug]                         183 B          96.1 kB
+├ ƒ /[companySlug]/abonnement              183 B          96.1 kB
+├ ƒ /[companySlug]/avis                    2.11 kB        89.4 kB
+├ ƒ /[companySlug]/campagnes               3.24 kB        99.2 kB
+├ ƒ /[companySlug]/clients                 1.68 kB        88.9 kB
+├ ƒ /[companySlug]/emails                  2.97 kB        98.9 kB
+├ ƒ /[companySlug]/gagnants                2.53 kB        89.8 kB
+├ ƒ /[companySlug]/lots                    3.17 kB        90.4 kB
+├ ƒ /[companySlug]/play                    7.06 kB         103 kB
+├ ƒ /[companySlug]/qr-codes                2.44 kB        89.7 kB
+├ ƒ /[companySlug]/reglages                6.36 kB         102 kB
+├ ƒ /admin                                 155 B          87.4 kB
+├ ƒ /admin/[...path]                       155 B          87.4 kB
+├ ƒ /admin/login                           1.52 kB        88.8 kB
+├ ƒ /api/admin/campaigns                   0 B                0 B
+├ ƒ /api/admin/campaigns/[id]/test         0 B                0 B
+├ ƒ /api/admin/company                     0 B                0 B
+├ ƒ /api/admin/customers                   0 B                0 B
+├ ƒ /api/admin/login                       0 B                0 B
+├ ƒ /api/admin/logout                      0 B                0 B
+├ ƒ /api/admin/play-qr                     0 B                0 B
+├ ƒ /api/admin/prizes                      0 B                0 B
+├ ƒ /api/admin/qrcodes                     0 B                0 B
+├ ƒ /api/admin/qrcodes/[id]/visual         0 B                0 B
+├ ƒ /api/admin/register                    0 B                0 B
+├ ƒ /api/admin/reviews                     0 B                0 B
+├ ƒ /api/admin/settings                    0 B                0 B
+├ ƒ /api/admin/spin-test                   0 B                0 B
+├ ƒ /api/admin/stats                       0 B                0 B
+├ ƒ /api/admin/test-token                  0 B                0 B
+├ ƒ /api/admin/twofa                       0 B                0 B
+├ ƒ /api/admin/verify-email                0 B                0 B
+├ ƒ /api/admin/winners                     0 B                0 B
+├ ƒ /api/admin/winners/qr                  0 B                0 B
+├ ƒ /api/cron/campaigns                    0 B                0 B
+├ ƒ /api/cron/subscriptions                0 B                0 B
+├ ƒ /api/identify                          0 B                0 B
+├ ƒ /api/inscription                       0 B                0 B
+├ ƒ /api/player/logout                     0 B                0 B
+├ ƒ /api/review                            0 B                0 B
+├ ƒ /api/spin                              0 B                0 B
+├ ƒ /api/subscription                      0 B                0 B
+├ ƒ /api/super/admins/[id]/twofa           0 B                0 B
+├ ƒ /api/super/audit                       0 B                0 B
+├ ƒ /api/super/companies                   0 B                0 B
+├ ƒ /api/super/companies/[id]              0 B                0 B
+├ ƒ /api/super/companies/[id]/impersonate  0 B                0 B
+├ ƒ /api/super/companies/[id]/totp         0 B                0 B
+├ ƒ /api/super/email-config                0 B                0 B
+├ ƒ /api/super/email-config/reset          0 B                0 B
+├ ƒ /api/super/env-config                  0 B                0 B
+├ ƒ /api/super/impersonate/exit            0 B                0 B
+├ ƒ /api/super/plans                       0 B                0 B
+├ ƒ /api/super/stats                       0 B                0 B
+├ ƒ /api/super/subscriptions               0 B                0 B
+├ ƒ /api/unsubscribe                       0 B                0 B
+├ ƒ /api/verify                            0 B                0 B
+├ ○ /confidentialite                       155 B          87.4 kB
+├ ƒ /entreprises                           1.1 kB         97.1 kB
+├ ƒ /entreprises/[companySlug]             1.1 kB         97.1 kB
+├ ○ /inscription                           1.76 kB        97.7 kB
+├ ƒ /jeu                                   155 B          87.4 kB
+├ ○ /mentions-legales                      155 B          87.4 kB
+├ ○ /operation-terminee                    183 B          96.1 kB
+├ ƒ /p/[companySlug]/[qrSlug]              0 B                0 B
+├ ƒ /r/[slug]                              0 B                0 B
+├ ƒ /reglement-jeu                         155 B          87.4 kB
+├ ƒ /super                                 4.75 kB          92 kB
+├ ƒ /super/abonnements                     4.3 kB          100 kB
+├ ƒ /super/audit                           1.13 kB        88.4 kB
+├ ƒ /super/env                             3.48 kB        90.7 kB
+└ ƒ /tarifs                                2.27 kB        98.2 kB
++ First Load JS shared by all              87.3 kB
+  ├ chunks/117-59e030f1b0f89043.js         31.7 kB
+  ├ chunks/fd9d1056-42a1c2df9c4a85a8.js    53.6 kB
+  └ other shared chunks (total)            1.89 kB
+
+
+ƒ Middleware                               32.2 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

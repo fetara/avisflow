@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { runSubscriptionTransitions } from '@/lib/subscription';
 
+// Jamais prérendu : route dynamique (cron / query params) — accède à la base
+export const dynamic = 'force-dynamic';
+
 // Cron Vercel : passe automatiquement APPROVED -> ACTIVE (à la date prévue) et
 // ACTIVE -> EXPIRED (après endAt). Idempotent. Sécurisé par CRON_SECRET.
 export async function GET(req) {

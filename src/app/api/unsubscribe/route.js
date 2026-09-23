@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+// Jamais prérendu : route dynamique (cron / query params) — accède à la base
+export const dynamic = 'force-dynamic';
+
 // Désinscription publique (lien en bas de chaque campagne) :
 // enregistre le refus marketing du client. Aucune donnée personnelle affichée.
 export async function GET(req) {
