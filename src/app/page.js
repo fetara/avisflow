@@ -4,6 +4,7 @@ import { Rocket, PlayCircle } from 'lucide-react';
 import NavBar from '@/components/NavBar';
 import ThemeToggle from '@/components/ThemeToggle';
 import LangSwitcher from '@/components/LangSwitcher';
+import DrawDemo from '@/components/DrawDemo';
 import { getLangFromCookies, t } from '@/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -264,6 +265,28 @@ export default async function LandingPage() {
               </li>
             ))}
           </ol>
+        </div>
+      </Section>
+
+      {/* Tirage au sort en direct (démo animée) */}
+      <Section>
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div>
+            <h2 className="text-3xl font-bold">{L('🎲 Live raffle draw', '🎲 سحب مباشر', '🎲 Tirage au sort en direct')}</h2>
+            <p className="mt-3 text-gray-600">
+              {L(
+                'Organize a raffle at your events: participants sign up from their phone, and the winners are drawn live on the big screen — with verifiable fairness.',
+                'نظّم سحبًا في فعالياتك: يسجل المشاركون من هواتفهم، ويُسحب الفائزون مباشرة على الشاشة الكبيرة — بعدالة قابلة للتحقق.',
+                'Organisez un tirage lors de vos événements : les participants s’inscrivent depuis leur téléphone, et les gagnants sont tirés en direct sur grand écran — avec une équité vérifiable.',
+              )}
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-gray-600">
+              <li>✓ {L('Fullscreen projection mode', 'وضع العرض بملء الشاشة', 'Mode projection plein écran')}</li>
+              <li>✓ {L('Verifiable randomness (server-side)', 'Aléa vérifiable côté serveur', 'Aléa vérifiable côté serveur')}</li>
+              <li>✓ {L('Winners export (CSV)', 'Export des gagnants (CSV)', 'Export des gagnants (CSV)')}</li>
+            </ul>
+          </div>
+          <DrawDemo />
         </div>
       </Section>
 
