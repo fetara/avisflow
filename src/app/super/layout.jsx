@@ -15,7 +15,7 @@ export default async function SuperAdminLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 lg:pl-64">
+    <div className="min-h-screen bg-gray-900 text-gray-100 ltr:lg:pl-64 rtl:lg:pr-64">
       <Sidebar
         brand="AvisFlow Admin"
         subtitle="Espace super administrateur"

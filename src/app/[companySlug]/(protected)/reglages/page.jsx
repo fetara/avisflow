@@ -42,6 +42,7 @@ export default function ReglagesPage() {
         address: companyInfo.address || '',
         phone: companyInfo.phone || '',
         website: companyInfo.website || '',
+        defaultLocale: companyInfo.defaultLocale || 'fr',
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -147,6 +148,15 @@ export default function ReglagesPage() {
               <label className="label" htmlFor="cweb">Site web</label>
               <input id="cweb" type="url" className="input" placeholder="https://…" maxLength={200} value={companyInfo.website || ''}
                 onChange={(e) => setCompanyInfo({ ...companyInfo, website: e.target.value })} />
+            </div>
+            <div>
+              <label className="label" htmlFor="clocale">Langue par défaut de la page de jeu</label>
+              <select id="clocale" className="input" value={companyInfo.defaultLocale || 'fr'}
+                onChange={(e) => setCompanyInfo({ ...companyInfo, defaultLocale: e.target.value })}>
+                <option value="fr">Français</option>
+                <option value="en">English</option>
+                <option value="ar">العربية (arabe)</option>
+              </select>
             </div>
           </div>
           <div className="flex items-center gap-3">

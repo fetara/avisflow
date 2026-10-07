@@ -43,6 +43,8 @@ model Company {
   twoFactorEnabled Boolean @default(true)
   // Visible publiquement sur la vitrine (entreprises participantes)
   isPublic Boolean @default(true)
+  // Langue par défaut de sa page de jeu / contenus publics
+  defaultLocale String @default("fr")
   subscriptions Subscription[]
   admins    Admin[]
   qrCodes   QrCode[]
@@ -86,6 +88,8 @@ model Customer {
   phone      String?
   consentAt  DateTime
   emailVerifiedAt DateTime?
+  // Langue préférée du participant (pour les envois)
+  locale String?
   // Marketing (phase 2) : consentement séparé + désinscription
   emailMarketingConsent Boolean @default(false)
   emailOptedOutAt DateTime?
@@ -136,7 +140,9 @@ model Prize {
   id        String   @id @default(cuid())
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  label     String
+  label     String   // libellé par défaut (français)
+  labelEn   String?
+  labelAr   String?
   weight    Int      @default(1)
   stock     Int?     // null = illimité
   active    Boolean  @default(true)

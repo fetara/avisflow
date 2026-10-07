@@ -74,12 +74,12 @@ export default function Sidebar({ brand = 'AvisFlow', subtitle = null, sections 
     <>
       {/* Burger mobile */}
       <button onClick={() => setOpen(true)} aria-label="Ouvrir le menu"
-        className="fixed left-3 top-3 z-40 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gray-900 text-xl text-white shadow-lg lg:hidden">
+        className="fixed start-3 top-3 z-40 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gray-900 text-xl text-white shadow-lg lg:hidden">
         ☰
       </button>
 
       {/* Desktop : sidebar fixe */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden lg:block">{nav}</aside>
+      <aside className="fixed inset-y-0 start-0 z-30 hidden lg:block">{nav}</aside>
 
       {/* Mobile : drawer */}
       {open && (

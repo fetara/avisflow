@@ -37,6 +37,8 @@ export default function LotsPage() {
         active: patch.active ?? p.active,
         sortOrder: p.sortOrder,
         photo: patch.photo !== undefined ? patch.photo : (p.photo || null),
+        labelEn: patch.labelEn !== undefined ? patch.labelEn : (p.labelEn || null),
+        labelAr: patch.labelAr !== undefined ? patch.labelAr : (p.labelAr || null),
       }),
     });
     load();
@@ -122,8 +124,14 @@ export default function LotsPage() {
                   </div>
                 </td>
                 <td className="p-3">
-                  <input className="input !py-1.5 !w-56" defaultValue={p.label}
+                  <input className="input !py-1.5 !w-56" defaultValue={p.label} placeholder="Français…"
                     onBlur={(e) => e.target.value !== p.label && update(p, { label: e.target.value })} />
+                  <div className="mt-1 flex gap-1">
+                    <input className="input !py-0.5 !w-27 !text-xs" defaultValue={p.labelEn || ''} placeholder="🇬🇧 EN"
+                      onBlur={(e) => e.target.value !== (p.labelEn || '') && update(p, { labelEn: e.target.value })} />
+                    <input className="input !py-0.5 !w-27 !text-xs" defaultValue={p.labelAr || ''} placeholder="🇸🇦 AR" dir="rtl"
+                      onBlur={(e) => e.target.value !== (p.labelAr || '') && update(p, { labelAr: e.target.value })} />
+                  </div>
                 </td>
                 <td className="p-3">
                   <input type="number" min="0" max="100" className="input !py-1.5 !w-20" defaultValue={p.weight}

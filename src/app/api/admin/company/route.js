@@ -9,6 +9,7 @@ const schema = z.object({
   address: z.string().trim().max(200).optional().or(z.literal('')),
   phone: z.string().trim().max(20).optional().or(z.literal('')),
   website: z.string().trim().max(200).optional().or(z.literal('')),
+  defaultLocale: z.enum(['fr', 'en', 'ar']).optional(),
 });
 
 // Entreprise cible : session entreprise, ou slug visité (super admin en navigation).
@@ -30,7 +31,7 @@ export async function GET(req) {
 
   const company = await db.company.findUnique({
     where: { id: companyId },
-    select: { name: true, address: true, phone: true, website: true, slug: true },
+    select: { name: true, address: true, phone: true, website: true, slug: true, defaultLocale: true },
   });
   return NextResponse.json({ company });
 }
@@ -51,11 +52,11 @@ export async function PATCH(req) {
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Données invalides.' }, { status: 400 });
-  const { name, address, phone, website } = parsed.data;
+  const { name, address, phone, website, defaultLocale } = parsed.data;
 
   const company = await db.company.update({
     where: { id: companyId },
-    data: { name, address: address || null, phone: phone || null, website: website || null },
+    data: { name, address: address || null, phone: phone || null, website: website || null, ...(defaultLocale ? { defaultLocale } : {}) },
   });
   await logAction(guard.admin.id, 'company.profile_update', 'Company', companyId);
   return NextResponse.json({ ok: true, company });

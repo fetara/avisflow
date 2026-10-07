@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Wheel from '@/components/Wheel';
 import Confetti from '@/components/Confetti';
+import { DICTS, RTL_LOCALES } from '@/i18n/dictionaries';
+import { useEffect } from 'react';
 
 function Stars({ n }) {
   return <span className="text-amber-400">{'★'.repeat(n)}<span className="text-gray-300">{'★'.repeat(5 - n)}</span></span>;
 }
 
-export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null, companySlug = null, brand = { logo: null, color: null }, formCfg = { firstName: true, lastName: true, phone: true, rgpdText: null }, testMode = false, testToken = null, winMessage = null }) {
+export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null, companySlug = null, brand = { logo: null, color: null }, formCfg = { firstName: true, lastName: true, phone: true, rgpdText: null }, testMode = false, testToken = null, winMessage = null, lang = 'fr' }) {
   const searchParams = useSearchParams();
   const [step, setStep] = useState(testMode ? 'wheel' : (initial.step || 'identify'));
   const [spin, setSpin] = useState(initial.spin);
@@ -21,6 +23,18 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
   const [review, setReview] = useState({ rating: 5, comment: '', photo: null, photoName: '' });
   const [reviewSent, setReviewSent] = useState(false);
   const [googleUrl, setGoogleUrl] = useState(searchParams.get('g') || '');
+  // i18n : dictionnaire selon la langue (entreprise ou cookie), RTL synchronisé
+  const dict = DICTS[lang] || DICTS.fr;
+  const T = (k) => {
+    let v = k.split('.').reduce((acc, x) => (acc && acc[x] != null ? acc[x] : undefined), dict);
+    if (v == null) v = k.split('.').reduce((acc, x) => (acc && acc[x] != null ? acc[x] : undefined), DICTS.fr);
+    return v == null ? k : String(v);
+  };
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = RTL_LOCALES.includes(lang) ? 'rtl' : 'ltr';
+    return () => { document.documentElement.lang = 'fr'; document.documentElement.dir = 'ltr'; };
+  }, [lang]);
   const [soundOn, setSoundOn] = useState(false); // désactivé par défaut (ambiance boutique)
 
   // Petite mélodie de victoire via WebAudio (uniquement si activée)
@@ -140,7 +154,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
       {/* Étape 1 : identification */}
       {step === 'identify' && (
         <form onSubmit={submitIdentify} className="card !bg-white/85 shadow-2xl backdrop-blur-md dark:!bg-gray-900/85">
-          <h2 className="text-lg font-bold">Qui êtes-vous ?</h2>
+          <h2 className="text-lg font-bold">{T('game.whoTitle')}</h2>
           <p className="mt-1 text-sm text-gray-500">
             {companyName ? `Un e-mail de confirmation vous sera envoyé pour débloquer la roue de ${companyName}.` : 'Un e-mail de confirmation vous sera envoyé pour débloquer le jeu.'}
           </p>
@@ -148,27 +162,27 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
             <div className={`grid gap-3 ${formCfg.firstName && formCfg.lastName ? 'grid-cols-2' : 'grid-cols-1'}`}>
               {formCfg.firstName && (
                 <div>
-                  <label className="label" htmlFor="firstName">Prénom *</label>
+                  <label className="label" htmlFor="firstName">{T('game.firstName')} *</label>
                   <input id="firstName" className="input" autoComplete="given-name" required maxLength={60} value={form.firstName}
                     onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
                 </div>
               )}
               {formCfg.lastName && (
                 <div>
-                  <label className="label" htmlFor="lastName">Nom *</label>
+                  <label className="label" htmlFor="lastName">{T('game.lastName')} *</label>
                   <input id="lastName" className="input" autoComplete="family-name" required maxLength={60} value={form.lastName}
                     onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
                 </div>
               )}
             </div>
             <div>
-              <label className="label" htmlFor="email">E-mail *</label>
+              <label className="label" htmlFor="email">{T('game.email')} *</label>
               <input id="email" type="email" className="input" autoComplete="email" required maxLength={120} value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             {formCfg.phone && (
               <div>
-                <label className="label" htmlFor="phone">Téléphone (optionnel)</label>
+                <label className="label" htmlFor="phone">{T('game.phone')}</label>
                 <input id="phone" type="tel" className="input" autoComplete="tel" maxLength={20} value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })} />
               </div>
@@ -177,8 +191,8 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
               <input type="checkbox" required className="mt-1 h-4 w-4 accent-pink-600" checked={form.consent}
                 onChange={(e) => setForm({ ...form, consent: e.target.checked })} />
               <span>
-                {formCfg.rgpdText || 'J’accepte que mes données soient utilisées pour cette opération, conformément à la politique de confidentialité.'}{' '}
-                Consentement obligatoire pour participer.
+                {formCfg.rgpdText || T('game.consent')}{' '}
+                {T('game.consentRequired')}
               </span>
             </label>
             <label className="flex items-start gap-3 text-sm text-gray-600">
@@ -187,7 +201,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
               <span>Je souhaite recevoir les actualités et offres de {companyName || 'l’établissement'} (facultatif).</span>
             </label>
             <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? 'Envoi…' : 'Recevoir mon lien de jeu'}
+              {loading ? T('common.loading') : T('game.submit')}
             </button>
             <p className="text-center text-xs text-gray-400">Jeu gratuit, sans achat. 1 tour par e-mail validé.</p>
           </div>
@@ -198,10 +212,9 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
       {step === 'check-email' && (
         <div className="card text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl">📧</div>
-          <h2 className="text-lg font-bold">Vérifiez vos e-mails !</h2>
+          <h2 className="text-lg font-bold">{T('game.checkTitle')}</h2>
           <p className="mt-2 text-sm text-gray-600">
-            Nous venons de vous envoyer un lien de validation (valide 30 minutes).<br />
-            Cliquez dessus pour débloquer la roue de la chance.
+            {lang === 'en' ? 'We just sent you a validation link (valid 30 minutes). Click it to unlock the wheel.' : lang === 'ar' ? 'أرسلنا لك رابط تأكيد (صالح 30 دقيقة). اضغط عليه لفتح العجلة.' : 'Nous venons de vous envoyer un lien de validation (valide 30 minutes). Cliquez dessus pour débloquer la roue de la chance.'}
           </p>
           <p className="mt-4 text-xs text-gray-400">Pensez à vérifier vos spams.</p>
         </div>
@@ -215,7 +228,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
               🧪 MODE TEST — aucune participation réelle, stock intact
             </p>
           )}
-          <h2 className="mb-6 text-center text-2xl font-extrabold">Tentez votre chance !</h2>
+          <h2 className="mb-6 text-center text-2xl font-extrabold">{T('game.wheelTitle')}</h2>
           <Wheel prizes={initial.prizes} onLaunch={onLaunch} onDone={onWheelDone}
             colors={wheelColors} bgImage={wheelBg} accent={brand.color || '#db2777'}
             spinEndpoint={testMode ? '/api/admin/spin-test' : '/api/spin'} spinToken={testToken} />
@@ -232,18 +245,18 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
             {soundOn ? '🔊' : '🔇'}
           </button>
           <div className="animate-bounce text-7xl" aria-hidden="true">🎉</div>
-          <h2 className="mt-3 text-3xl font-extrabold">{winMessage || 'Félicitations !'}</h2>
-          <p className="mt-1 text-gray-600">Vous avez gagné :</p>
+          <h2 className="mt-3 text-3xl font-extrabold">{winMessage || (lang === 'en' ? 'Congratulations!' : lang === 'ar' ? 'تهانينا!' : 'Félicitations !')}</h2>
+          <p className="mt-1 text-gray-600">{T('game.won')}</p>
           {spin.photo && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={spin.photo} alt={spin.label} className="mt-4 h-44 w-44 rounded-3xl object-cover shadow-xl" />
           )}
           <p className="mt-3 text-3xl font-extrabold text-brand-600">{spin.label}</p>
           <div className="mx-auto mt-5 w-full max-w-xs rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50 p-4">
-            <p className="text-xs uppercase tracking-wide text-gray-500">Votre code cadeau</p>
+            <p className="text-xs uppercase tracking-wide text-gray-500">{T('game.giftCode')}</p>
             <p className="mt-1 select-all font-mono text-2xl font-bold tracking-widest">{spin.giftCode}</p>
           </div>
-          <p className="mt-3 max-w-xs text-xs text-gray-500">Présentez ce code en caisse pour bénéficier de votre gain.</p>
+          <p className="mt-3 max-w-xs text-xs text-gray-500">{T('game.giftHint')}</p>
           {testMode ? (
             <button onClick={() => setStep('wheel')} style={brand.color ? { backgroundColor: brand.color } : undefined} className="btn-primary mt-6 w-full max-w-xs">
               🔄 Rejouer (test)

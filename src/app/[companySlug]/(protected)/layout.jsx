@@ -88,7 +88,7 @@ export default async function ProtectedCompanyLayout({ children, params }) {
   const base = `/${company.slug}`;
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 lg:pl-64">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 ltr:lg:pl-64 rtl:lg:pr-64">
       <Sidebar
         brand={company.name}
         subtitle={isSuper ? `Vue super admin · /${company.slug}` : `/${company.slug}`}

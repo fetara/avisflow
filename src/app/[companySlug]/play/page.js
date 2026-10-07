@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { db, getCompanySetting, getCompanySettings } from '@/lib/db';
 import { getPlayerSession } from '@/lib/auth';
+import { getLangFromCookies } from '@/i18n';
 import GameFlow from '@/components/GameFlow';
 
 export const dynamic = 'force-dynamic';
@@ -53,11 +54,18 @@ export default async function PlayPage({ params, searchParams }) {
     const prizeCount = await db.prize.count({ where: { companyId: company.id, active: true } });
     if (prizeCount === 0) return <NotReady companyName={company.name} />;
 
-    const prizes = await db.prize.findMany({
+    const rows = await db.prize.findMany({
       where: { active: true, companyId: company.id },
       orderBy: { sortOrder: 'asc' },
-      select: { id: true, label: true, photo: true },
+      select: { id: true, label: true, labelEn: true, labelAr: true, photo: true },
     });
+    // Langue d'affichage : langue par défaut de l'entreprise, sinon cookie utilisateur
+    const lang = company.defaultLocale || getLangFromCookies();
+    const prizes = rows.map((p) => ({
+      id: p.id,
+      label: lang === 'en' ? (p.labelEn || p.label) : lang === 'ar' ? (p.labelAr || p.label) : p.label,
+      photo: p.photo,
+    }));
 
     let initial = { step: 'identify', spin: null, reviewDone: false, prizes, email: null, demoToken: null };
 
@@ -109,6 +117,7 @@ export default async function PlayPage({ params, searchParams }) {
       companyName={company.name} headline={headline} sub={sub}
       wheelColors={wheelColors} wheelBg={wheelBg}
       brand={brand} formCfg={formCfg} winMessage={winMessage}
+      lang={company.defaultLocale || getLangFromCookies()}
       testMode={Boolean(testToken)} testToken={testToken} />;
   } catch (e) {
     return <NotReady companyName={company.name} />;
