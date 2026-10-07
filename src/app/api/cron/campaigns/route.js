@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { processCampaignBatch } from '@/lib/email-campaigns';
+import { processDueSmsCampaigns } from '@/lib/sms-service';
 
 // Jamais prérendu : route dynamique (cron / query params) — accède à la base
 export const dynamic = 'force-dynamic';
@@ -33,5 +34,7 @@ export async function GET(req) {
     // Un lot par campagne par passage (le prochain cron continue)
     results.push(await processCampaignBatch(c.id, 25));
   }
-  return NextResponse.json({ ok: true, campaigns: due.length, results });
+  // Campagnes SMS (canal sms) : mêmes lots idempotents
+  const smsCount = await processDueSmsCampaigns();
+  return NextResponse.json({ ok: true, campaigns: due.length, results, smsCampaigns: smsCount });
 }

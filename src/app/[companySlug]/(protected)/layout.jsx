@@ -24,6 +24,7 @@ const SECTIONS = [
   { title: 'Marketing', items: [
     { href: '/campagnes', label: 'Campagnes e-mail', icon: 'megaphone', perm: null },
     { href: '/emails', label: 'E-mails', icon: 'mail', perm: null },
+    { href: '/sms', label: 'SMS', icon: 'megaphone', perm: null },
   ] },
   { title: 'Administration', items: [
     { href: '/abonnement', label: 'Abonnement', icon: 'creditcard', perm: null },

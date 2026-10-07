@@ -25,6 +25,7 @@ export default async function SuperAdminLayout({ children }) {
           ] },
           { title: 'Abonnements', items: [
             { href: '/super/abonnements', label: 'Abonnements & plans', icon: 'creditcard' },
+            { href: '/super/sms', label: 'SMS', icon: 'phone' },
           ] },
           { title: 'Système', items: [
             { href: '/super/env', label: 'Serveur & E-mails', icon: 'server' },

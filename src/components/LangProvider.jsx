@@ -24,3 +24,5 @@ export function useT() {
   const isRtl = RTL_LOCALES.includes(lang);
   return { lang, t, isRtl };
 }
+
+export default LangProvider;

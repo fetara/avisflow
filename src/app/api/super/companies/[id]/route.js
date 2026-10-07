@@ -10,6 +10,8 @@ const patchSchema = z.object({
   active: z.boolean().optional(),
   isPublic: z.boolean().optional(), // visible sur la vitrine publique
   twoFactorEnabled: z.boolean().optional(), // force/désactive la 2FA pour toute l'entreprise
+  smsEnabled: z.boolean().optional(), // active/désactive les SMS pour l'entreprise
+  smsQuotaMonthly: z.number().int().nonnegative().nullable().optional(),
   permissions: z.array(z.string()).optional(), // matrice de droits du/des COMPANY_ADMIN
   adminPassword: z.string().min(8).max(72).optional(), // réinitialisation du mot de passe entreprise
   newAdminEmail: z.string().email().toLowerCase().optional(),
@@ -36,6 +38,13 @@ export async function PATCH(req, { params }) {
   if (name) await db.company.update({ where: { id }, data: { name } });
   if (typeof active === 'boolean') await db.company.update({ where: { id }, data: { active } });
   if (typeof isPublic === 'boolean') await db.company.update({ where: { id }, data: { isPublic } });
+  if (typeof smsEnabled === 'boolean' || smsQuotaMonthly !== undefined) {
+    const smsData = {};
+    if (typeof smsEnabled === 'boolean') smsData.smsEnabled = smsEnabled;
+    if (smsQuotaMonthly !== undefined) smsData.smsQuotaMonthly = smsQuotaMonthly;
+    await db.company.update({ where: { id }, data: smsData });
+    await logAction(guard.admin.id, 'company.sms_settings', 'Company', id);
+  }
   if (typeof twoFactorEnabled === 'boolean') {
     await db.company.update({ where: { id }, data: { twoFactorEnabled } });
     await logAction(guard.admin.id, twoFactorEnabled ? 'company.2fa_enable' : 'company.2fa_disable', 'Company', id);

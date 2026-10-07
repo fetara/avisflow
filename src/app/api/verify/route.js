@@ -34,6 +34,7 @@ export async function GET(req) {
         sourceQrId: data.sourceQrId,
         companyId,
         emailMarketingConsent: Boolean(data.emailMarketingConsent),
+        smsConsentAt: data.smsConsentAt ? new Date(data.smsConsentAt) : null,
       },
     });
   }

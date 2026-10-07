@@ -45,6 +45,9 @@ model Company {
   isPublic Boolean @default(true)
   // Langue par défaut de sa page de jeu / contenus publics
   defaultLocale String @default("fr")
+  // SMS (étape 4) : activés par le SUPER ADMIN + quota mensuel (null = illimité)
+  smsEnabled Boolean @default(true)
+  smsQuotaMonthly Int?
   subscriptions Subscription[]
   admins    Admin[]
   qrCodes   QrCode[]
@@ -54,6 +57,7 @@ model Company {
   emailTemplates EmailTemplate[]
   campaigns Campaign[]
   raffleDraws RaffleDraw[]
+  coupons Coupon[]
   createdAt DateTime @default(now())
 }
 
@@ -91,6 +95,9 @@ model Customer {
   emailVerifiedAt DateTime?
   // Langue préférée du participant (pour les envois)
   locale String?
+  // Consentement SMS séparé du consentement e-mail (RGPD)
+  smsConsentAt DateTime?
+  smsOptedOutAt DateTime?
   // Marketing (phase 2) : consentement séparé + désinscription
   emailMarketingConsent Boolean @default(false)
   emailOptedOutAt DateTime?
@@ -254,6 +261,23 @@ model Subscription {
   @@index([status, activatedAt])
 }
 
+// ---------- Bons de réduction (étape 4) ----------
+model Coupon {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code      String   @unique
+  kind      String   @default("percent") // percent | amount
+  value     Float
+  expiresAt DateTime?
+  maxUses   Int?
+  usedCount Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([companyId, active])
+}
+
 // ---------- Tirage au sort (étape 3) ----------
 model RaffleDraw {
   id        String   @id @default(cuid())
@@ -324,6 +348,7 @@ model Campaign {
   subject     String
   body        String
   segment     String   @default("all") // all | reviewed | not_reviewed | won | inactive30
+  channel     String   @default("email") // email | sms
   status      String   @default("DRAFT") // DRAFT | SCHEDULED | SENDING | SENT | CANCELLED | FAILED
   scheduledAt DateTime?
   sentAt      DateTime?

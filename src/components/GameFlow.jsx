@@ -15,7 +15,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
   const searchParams = useSearchParams();
   const [step, setStep] = useState(testMode ? 'wheel' : (initial.step || 'identify'));
   const [spin, setSpin] = useState(initial.spin);
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', consent: false, marketing: false });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', consent: false, marketing: false, smsMarketing: false });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(err === 'expired' ? 'Lien expiré : validez à nouveau votre e-mail.' : '');
   const [error, setError] = useState('');
@@ -61,7 +61,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
       const res = await fetch('/api/identify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, emailMarketingConsent: form.marketing, sourceSlug: src || searchParams.get('src') || '', companySlug: companySlug || '' }),
+        body: JSON.stringify({ ...form, emailMarketingConsent: form.marketing, smsMarketingConsent: form.smsMarketing, sourceSlug: src || searchParams.get('src') || '', companySlug: companySlug || '' }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur');
@@ -199,6 +199,11 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
               <input type="checkbox" className="mt-1 h-4 w-4 accent-pink-600" checked={form.marketing}
                 onChange={(e) => setForm({ ...form, marketing: e.target.checked })} />
               <span>Je souhaite recevoir les actualités et offres de {companyName || 'l’établissement'} (facultatif).</span>
+            </label>
+            <label className="flex items-start gap-3 text-sm text-gray-600">
+              <input type="checkbox" className="mt-1 h-4 w-4 accent-pink-600" checked={form.smsMarketing}
+                onChange={(e) => setForm({ ...form, smsMarketing: e.target.checked })} />
+              <span>Je souhaite recevoir les offres par SMS (facultatif — nécessite un numéro).</span>
             </label>
             <button type="submit" disabled={loading} className="btn-primary w-full">
               {loading ? T('common.loading') : T('game.submit')}

@@ -121,6 +121,24 @@ export default function SuperAdminPage() {
     load();
   }
 
+  async function toggleSms(c) {
+    await fetch(`/api/super/companies/${c.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ smsEnabled: !c.smsEnabled }),
+    });
+    load();
+  }
+
+  async function setSmsQuota(c) {
+    const v = window.prompt(`Quota mensuel SMS pour « ${c.name} » (laisser vide = illimité) :`, c.smsQuotaMonthly ?? '');
+    if (v === null) return;
+    await fetch(`/api/super/companies/${c.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ smsQuotaMonthly: v === '' ? null : Number(v) }),
+    });
+    load();
+  }
+
   async function toggle2fa(c) {
     const label = c.twoFactorEnabled
       ? `Désactiver la 2FA pour toute l'entreprise « ${c.name} » ? (utile au support)`
@@ -221,7 +239,7 @@ export default function SuperAdminPage() {
             <tr>
               <th className="p-3">Entreprise</th><th className="p-3">Statut</th><th className="p-3">Vitrine</th><th className="p-3">Abonnement</th><th className="p-3">Admin(s)</th>
               <th className="p-3">QR</th><th className="p-3">Lots</th><th className="p-3">Clients</th><th className="p-3">Parties</th><th className="p-3">TOTP</th>
-              <th className="p-3">Actions</th>
+              <th className="p-3">Actions</th><th className="p-3">SMS</th>
             </tr>
           </thead>
           <tbody className="bg-gray-900/50">
@@ -288,7 +306,7 @@ export default function SuperAdminPage() {
               </tr>
             ))}
             {companies.length === 0 && (
-              <tr><td colSpan={12} className="p-6 text-center text-gray-500">Aucune entreprise. Créez la première ci-dessus.</td></tr>
+              <tr><td colSpan={13} className="p-6 text-center text-gray-500">Aucune entreprise. Créez la première ci-dessus.</td></tr>
             )}
           </tbody>
         </table>

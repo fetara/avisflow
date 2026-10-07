@@ -56,6 +56,8 @@ export async function GET(req) {
       active: c.active,
       isPublic: c.isPublic !== false,
       twoFactorEnabled: c.twoFactorEnabled !== false,
+      smsEnabled: c.smsEnabled !== false,
+      smsQuotaMonthly: c.smsQuotaMonthly ?? null,
       subscription: subByCompany[c.id] || null,
       createdAt: c.createdAt,
       admins: c.admins.filter((a) => a.role === 'COMPANY_ADMIN'),
