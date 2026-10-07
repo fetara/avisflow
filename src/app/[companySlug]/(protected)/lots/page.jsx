@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { Plus, Trash2 } from 'lucide-react';
 
 import { useCallback, useEffect, useState } from 'react';
 import { TableSkeleton, EmptyState } from '@/components/ui';
@@ -142,7 +143,7 @@ export default function LotsPage() {
                     onChange={(e) => update(p, { active: e.target.checked })} />
                 </td>
                 <td className="p-3">
-                  <button onClick={() => remove(p)} className="text-xs text-red-600 hover:underline">Supprimer</button>
+                  <button onClick={() => remove(p)} className="inline-flex items-center gap-1 text-xs text-red-600 hover:underline"><Trash2 className="h-3.5 w-3.5" /> Supprimer</button>
                 </td>
               </tr>
             ))}
@@ -167,7 +168,7 @@ export default function LotsPage() {
           <input type="number" min="0" className="input !py-2 !w-28" value={newPrize.stock}
             onChange={(e) => setNewPrize({ ...newPrize, stock: e.target.value })} />
         </div>
-        <button className="btn-primary !py-2">Ajouter</button>
+        <button className="btn-primary !py-2"><Plus className="h-4 w-4" /> Ajouter</button>
         {error && <p className="text-sm text-red-600">{error}</p>}
       </form>
       <Toast />

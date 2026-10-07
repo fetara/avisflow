@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
+import { Rocket, PlayCircle, Check } from 'lucide-react';
 import NavBar from '@/components/NavBar';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -223,8 +224,8 @@ export default async function LandingPage() {
             partager leur expérience et revenir dans votre établissement.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/inscription" className="btn-primary">🚀 Commencer gratuitement</Link>
-            <a href="#etapes" className="btn-secondary">Voir comment ça marche</a>
+            <Link href="/inscription" className="btn-primary"><Rocket className="h-5 w-5" /> Commencer gratuitement</Link>
+            <a href="#etapes" className="btn-secondary"><PlayCircle className="h-5 w-5" /> Voir comment ça marche</a>
           </div>
           <p className="mt-3 text-sm text-gray-400">Essai gratuit · Sans carte bancaire · Prêt en 2 minutes</p>
         </div>
@@ -483,8 +484,8 @@ export default async function LandingPage() {
         <h2 className="text-3xl font-bold sm:text-4xl">Prêt à transformer vos clients en clients fidèles ?</h2>
         <p className="mx-auto mt-3 max-w-xl text-brand-50">Lancez votre première campagne en quelques minutes.</p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
-          <Link href="/inscription" className="rounded-xl bg-white px-6 py-3 font-bold text-brand-700 shadow-lg transition hover:bg-brand-50">🚀 Commencer gratuitement</Link>
-          <a href="#etapes" className="rounded-xl border border-white/40 px-6 py-3 font-semibold text-white transition hover:bg-white/10">Voir la démonstration</a>
+          <Link href="/inscription" className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-bold text-brand-700 shadow-lg transition hover:bg-brand-50"><Rocket className="h-5 w-5" /> Commencer gratuitement</Link>
+          <a href="#etapes" className="inline-flex items-center gap-2 rounded-xl border border-white/40 px-6 py-3 font-semibold text-white transition hover:bg-white/10"><PlayCircle className="h-5 w-5" /> Voir la démonstration</a>
         </div>
       </Section>
 

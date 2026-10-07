@@ -21,14 +21,14 @@ export default async function SuperAdminLayout({ children }) {
         subtitle="Espace super administrateur"
         sections={[
           { title: 'Pilotage', items: [
-            { href: '/super', label: 'Entreprises', icon: '🏢' },
+            { href: '/super', label: 'Entreprises', icon: 'building' },
           ] },
           { title: 'Abonnements', items: [
-            { href: '/super/abonnements', label: 'Abonnements & plans', icon: '💳' },
+            { href: '/super/abonnements', label: 'Abonnements & plans', icon: 'creditcard' },
           ] },
           { title: 'Système', items: [
-            { href: '/super/env', label: 'Serveur & E-mails', icon: '⚙️' },
-            { href: '/super/audit', label: 'Journal d’audit', icon: '📜' },
+            { href: '/super/env', label: 'Serveur & E-mails', icon: 'server' },
+            { href: '/super/audit', label: 'Journal d’audit', icon: 'audit' },
           ] },
         ]}
         footer={

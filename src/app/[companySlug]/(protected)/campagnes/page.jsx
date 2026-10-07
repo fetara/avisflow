@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { TableSkeleton, EmptyState } from '@/components/ui';
+import { Megaphone } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 
 /* Campagnes e-mail : création (segment + contenu + date), confirmation du nombre
@@ -129,9 +130,7 @@ export default function CampagnesPage() {
                 onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })} required />
             </div>
           )}
-          <button disabled={busy} className="btn-primary !py-2.5">
-            {busy ? 'Création…' : 'Créer et lancer'}
-          </button>
+          <button disabled={busy} className="btn-primary !py-2.5 inline-flex items-center gap-2"><Megaphone className="h-4 w-4" />{busy ? 'Création…' : 'Créer et lancer'}</button>
         </div>
       </form>
 

@@ -10,16 +10,32 @@ body {
   @apply bg-gray-50 text-gray-900 antialiased;
 }
 
+/* Boutons : états complets (normal, hover, actif, désactivé) — icônes alignées via gap */
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-3 font-semibold text-white shadow-md transition hover:bg-brand-700 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100;
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-3 font-semibold text-white shadow-md transition hover:bg-brand-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100;
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100 active:scale-[0.98];
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700;
 }
 
+.btn-danger {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 font-semibold text-white shadow-md transition hover:bg-red-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 font-medium text-gray-600 transition hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-800;
+}
+
+/* Apparition douce des sections (respecte prefers-reduced-motion) */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: fade-up 0.45s ease-out both; }
+
 .card {
-  @apply rounded-2xl bg-white p-6 shadow-lg shadow-gray-200/60;
+  @apply rounded-2xl bg-white p-6 shadow-lg shadow-gray-200/60 transition dark:bg-gray-900;
 }
 
 .input {

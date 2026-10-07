@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { TableSkeleton, EmptyState } from '@/components/ui';
+import { Plus } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 
 /* Gestion des abonnements (super admin) : plans + demandes + actions.
@@ -95,7 +96,7 @@ export default function AbonnementsPage() {
           <h1 className="text-2xl font-bold">Abonnements</h1>
           <p className="mt-1 text-sm text-gray-400">Plans, demandes des entreprises, activations et limites.</p>
         </div>
-        <button onClick={newPlan} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-gray-900 hover:bg-amber-400">+ Créer un plan</button>
+        <button onClick={newPlan} className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-gray-900 hover:bg-amber-400"><Plus className="h-4 w-4" /> Créer un plan</button>
       </div>
 
       {/* Stats contractuelles (pas de paiement réel intégré) */}

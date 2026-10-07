@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { FlaskConical, Download, Plus, Trash2, Pencil, Eye } from 'lucide-react';
 
 import { useCallback, useEffect, useState } from 'react';
 
@@ -104,7 +105,7 @@ export default function QrCodesPage() {
             onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} />
         </div>
         <div className="sm:col-span-5 flex items-center gap-3">
-          <button className="btn-primary !py-2">+ Créer le QR code</button>
+          <button className="btn-primary !py-2"><Plus className="h-4 w-4" /> Créer le QR code</button>
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>
       </form>
@@ -132,13 +133,18 @@ export default function QrCodesPage() {
                   {qr.active ? 'Désactiver' : 'Activer'}
                 </button>
                 <button onClick={() => setEditing({ ...qr, expiresAt: qr.expiresAt ? qr.expiresAt.slice(0, 10) : '' })}
-                  className="rounded-lg bg-blue-50 px-3 py-1.5 font-medium text-blue-700 hover:bg-blue-100">Éditer</button>
+                  className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 font-medium text-blue-700 hover:bg-blue-100"><Pencil className="h-4 w-4" /> Éditer</button>
+                <button onClick={() => testQr(qr)} className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 font-medium text-amber-700 hover:bg-amber-100">
+                  <FlaskConical className="h-4 w-4" /> Tester
+                </button>
                 <a href={`/api/${companySlug}/qrcodes/${qr.id}/visual?format=png`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">PNG</a>
                 <a href={`/api/${companySlug}/qrcodes/${qr.id}/visual?format=svg&logo=1`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">SVG</a>
                 <a href={`/api/${companySlug}/qrcodes/${qr.id}/visual?format=pdf&poster=comptoir&text=${encodeURIComponent('Scannez ce code et tentez de gagner un cadeau !')}`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">PDF comptoir</a>
                 <a href={`/api/${companySlug}/qrcodes/${qr.id}/visual?format=pdf&poster=tenture`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">PDF tenture</a>
                 <a href={`/api/${companySlug}/qrcodes/${qr.id}/visual?format=pdf&poster=sticker`} className="rounded-lg bg-brand-50 px-3 py-1.5 font-medium text-brand-700 hover:bg-brand-100">PDF sticker</a>
-                <button onClick={() => remove(qr)} className="rounded-lg bg-red-50 px-3 py-1.5 font-medium text-red-700 hover:bg-red-100">Suppr.</button>
+                <button onClick={() => remove(qr)} className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 font-medium text-red-700 hover:bg-red-100">
+                  <Trash2 className="h-4 w-4" /> Suppr.
+                </button>
               </div>
             </div>
           </div>

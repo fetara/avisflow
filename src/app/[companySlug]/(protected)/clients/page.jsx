@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { Download, Trash2 } from 'lucide-react';
 
 import { useCallback, useEffect, useState } from 'react';
 

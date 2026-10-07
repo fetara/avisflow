@@ -3,9 +3,27 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { LayoutDashboard, Users, Star, Gift, QrCode, Trophy, CreditCard, Settings, Megaphone, Mail, Server, ScrollText, Building2 } from 'lucide-react';
+
+// Map des icônes Lucide par clé (les layouts passent une clé, pas un composant)
+const ICONS = {
+  dashboard: LayoutDashboard,
+  users: Users,
+  star: Star,
+  gift: Gift,
+  qrcode: QrCode,
+  trophy: Trophy,
+  creditcard: CreditCard,
+  settings: Settings,
+  megaphone: Megaphone,
+  mail: Mail,
+  server: Server,
+  audit: ScrollText,
+  building: Building2,
+};
 
 /* Sidebar administrative : desktop fixe à gauche, drawer ☰ sur mobile.
- * sections : [{ title, items: [{ href, label, icon, badge? }] }] */
+ * sections : [{ title, items: [{ href, label, icon: clé Lucide, badge? }] }] */
 export default function Sidebar({ brand = 'AvisFlow', subtitle = null, sections = [], footer = null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -28,19 +46,22 @@ export default function Sidebar({ brand = 'AvisFlow', subtitle = null, sections 
               <p className="mb-1 px-2 text-[10px] font-bold uppercase tracking-widest text-gray-600">{sec.title}</p>
             )}
             <div className="space-y-0.5">
-              {sec.items.map((it) => (
-                <Link key={it.href} href={it.href} onClick={() => setOpen(false)}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                    isActive(it.href)
-                      ? 'bg-brand-600/20 text-brand-300'
-                      : 'hover:bg-gray-800 hover:text-white'}`}>
-                  <span aria-hidden="true" className="w-5 text-center">{it.icon}</span>
-                  <span className="flex-1">{it.label}</span>
-                  {it.badge != null && it.badge > 0 && (
-                    <span className="rounded-full bg-amber-500/20 px-2 text-xs font-bold text-amber-400">{it.badge}</span>
-                  )}
-                </Link>
-              ))}
+              {sec.items.map((it) => {
+                const Icon = ICONS[it.icon] || LayoutDashboard;
+                return (
+                  <Link key={it.href} href={it.href} onClick={() => setOpen(false)}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                      isActive(it.href)
+                        ? 'bg-brand-600/20 text-brand-300'
+                        : 'hover:bg-gray-800 hover:text-white'}`}>
+                    <Icon className="h-4.5 w-4.5 shrink-0" aria-hidden="true" />
+                    <span className="flex-1">{it.label}</span>
+                    {it.badge != null && it.badge > 0 && (
+                      <span className="rounded-full bg-amber-500/20 px-2 text-xs font-bold text-amber-400">{it.badge}</span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         ))}

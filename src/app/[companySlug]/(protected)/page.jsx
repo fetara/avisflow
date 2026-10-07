@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Eye, Users, Star, Gift, Percent } from 'lucide-react';
 import { db } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import SubscriptionCard from './SubscriptionCard';
@@ -94,8 +95,8 @@ export default async function Dashboard({ params, searchParams }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Votre activité avec AvisFlow</h1>
         <a href={`/${companySlug}/play`} target="_blank" rel="noopener noreferrer"
-          className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
-          👁️ Voir ce que voit mon client
+          className="inline-flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
+          <Eye className="h-4 w-4" /> Voir ce que voit mon client
         </a>
       </div>
 

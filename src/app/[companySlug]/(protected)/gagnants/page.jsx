@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { CheckCircle2, RotateCcw, Download } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { TableSkeleton, EmptyState } from '@/components/ui';
 import { useToast } from '@/components/Toast';
@@ -98,7 +99,7 @@ export default function GagnantsPage() {
                       </span>
                     )}
                     <button onClick={() => toggleRedeemed(w)} className="ml-2 text-xs text-brand-600 hover:underline">
-                      {w.redeemedAt ? 'annuler' : '✓ remis'}
+                      {w.redeemedAt ? 'annuler' : '✓ Remis'}
                     </button>
                   </td>
                 </tr>

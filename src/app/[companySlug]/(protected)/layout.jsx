@@ -11,18 +11,22 @@ export const dynamic = 'force-dynamic';
 // Navigation du backoffice entreprise, organisée par sections (sidebar gauche)
 const SECTIONS = [
   { title: 'Principal', items: [
-    { href: '', label: 'Tableau de bord', icon: '📊', perm: null },
-    { href: '/clients', label: 'Clients', icon: '👥', perm: 'view_customers' },
-    { href: '/avis', label: 'Avis', icon: '⭐', perm: 'moderate_reviews' },
+    { href: '', label: 'Tableau de bord', icon: 'dashboard', perm: null },
+    { href: '/clients', label: 'Clients', icon: 'users', perm: 'view_customers' },
+    { href: '/avis', label: 'Avis', icon: 'star', perm: 'moderate_reviews' },
   ] },
   { title: 'Engagement', items: [
-    { href: '/lots', label: 'Lots de la roue', icon: '🎁', perm: 'manage_prizes' },
-    { href: '/qr-codes', label: 'QR codes', icon: '📱', perm: 'manage_qrcodes' },
-    { href: '/gagnants', label: 'Gagnants', icon: '🏆', perm: 'view_customers' },
+    { href: '/lots', label: 'Lots de la roue', icon: 'gift', perm: 'manage_prizes' },
+    { href: '/qr-codes', label: 'QR codes', icon: 'qrcode', perm: 'manage_qrcodes' },
+    { href: '/gagnants', label: 'Gagnants', icon: 'trophy', perm: 'view_customers' },
+  ] },
+  { title: 'Marketing', items: [
+    { href: '/campagnes', label: 'Campagnes e-mail', icon: 'megaphone', perm: null },
+    { href: '/emails', label: 'E-mails', icon: 'mail', perm: null },
   ] },
   { title: 'Administration', items: [
-    { href: '/abonnement', label: 'Abonnement', icon: '💳', perm: null },
-    { href: '/reglages', label: 'Paramètres', icon: '⚙️', perm: 'configure_wheel' },
+    { href: '/abonnement', label: 'Abonnement', icon: 'creditcard', perm: null },
+    { href: '/reglages', label: 'Paramètres', icon: 'settings', perm: 'configure_wheel' },
   ] },
 ];
 

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Save } from 'lucide-react';
 
 import { useParams } from 'next/navigation';
 
@@ -202,7 +203,7 @@ export default function ReglagesPage() {
           <p className="mt-1 text-xs text-gray-400">JPG/PNG, 2 Mo max. Un voile clair est appliqué pour garder les textes lisibles.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="btn-primary !py-2">Enregistrer l'apparence</button>
+          <button className="btn-primary !py-2"><Save className="h-4 w-4" /> Enregistrer l'apparence</button>
           {saved && <span className="text-sm text-emerald-600">✓ Enregistré</span>}
           {error && <span className="text-sm text-red-600">{error}</span>}
         </div>
@@ -231,7 +232,7 @@ export default function ReglagesPage() {
           </div>
         ))}
         <div className="flex items-center gap-3">
-          <button className="btn-primary !py-2">Enregistrer</button>
+          <button className="btn-primary !py-2"><Save className="h-4 w-4" /> Enregistrer</button>
           {saved && <span className="text-sm text-emerald-600">✓ Enregistré</span>}
           {error && <span className="text-sm text-red-600">{error}</span>}
         </div>
