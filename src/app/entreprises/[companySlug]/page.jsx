@@ -33,6 +33,7 @@ export default async function AvisEntreprisePage({ params, searchParams }) {
   const page = Math.max(1, parseInt(searchParams?.page || '1', 10));
 
   let company = null;
+  let hasDraw = false;
   let reviews = [];
   let total = 0;
   let avg = null;
