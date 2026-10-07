@@ -237,26 +237,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Tirage en direct (démo animée) */}
-      <section className="border-y border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 lg:grid-cols-2">
-          <div>
-            <Eyebrow>{L('For your events', 'لفعالياتكم', 'Pour vos événements')}</Eyebrow>
-            <h2 className="text-2xl font-extrabold sm:text-3xl">{T('landing.raffleTitle')}</h2>
-            <p className="mt-3 text-gray-600">{T('landing.raffleText')}</p>
-            <ul className="mt-4 space-y-2 text-sm text-gray-600">
-              {[L('Fullscreen projection mode', 'وضع العرض بملء الشاشة', 'Mode projection plein écran'),
-                L('Verifiable randomness (server-side)', 'Aléa vérifiable côté serveur', 'Aléa vérifiable côté serveur'),
-                L('Winners export (CSV)', 'Export des gagnants (CSV)', 'Export des gagnants (CSV)')].map((x) => (
-                <li key={x} className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> {x}</li>
-              ))}
-            </ul>
-            <Link href="/inscription" className="btn-primary mt-6 !py-2.5">{T('common.start')}</Link>
-          </div>
-          <DrawDemo />
-        </div>
-      </section>
-
+     
       {/* Fonctionnalités + secteurs */}
       <section id="fonctionnalites" className="mx-auto max-w-6xl px-4 py-14">
         <SectionHead

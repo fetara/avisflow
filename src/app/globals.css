@@ -72,3 +72,26 @@ body {
 .dark .text-brand-700 { color: #f9a8d4; }
 
 .font-arabic { font-family: 'Noto Sans Arabic', system-ui, sans-serif; }
+
+/* ---------- Boule de tirage au sort : billes qui culbutent ---------- */
+@keyframes ball-tumble {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(7px, -12px) rotate(95deg); }
+  50% { transform: translate(-9px, 7px) rotate(185deg); }
+  75% { transform: translate(6px, 10px) rotate(275deg); }
+}
+.ball {
+  position: absolute;
+  border-radius: 9999px;
+  box-shadow: inset -3px -4px 6px rgba(0, 0, 0, 0.25), inset 2px 3px 4px rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: ball-tumble 1.1s ease-in-out infinite;
+}
+.ball-paused .ball { animation-play-state: paused; }
+
+/* Ticket de loterie (nom tiré) */
+.raffle-ticket {
+  position: relative;
+  background: repeating-linear-gradient(90deg, #fff 0 14px, #f9fafb 14px, #fff 28px);
+  border: 2px dashed #d1d5db;
+  border-radius: 0.9rem;
+}
