@@ -92,7 +92,7 @@ export default function DrawDemo({ size = 300 }) {
         </div>
       </div>
       <p className={`mt-4 text-sm font-bold ${winner ? 'text-emerald-600' : 'text-gray-400'}`}>
-        {winner ? `🎉 Gagnant : ${winner}` : '🎲 Tirage en cours…'}
+        {winner ? `🎉 Gagnant : ${winner}` : '🎲 Tirage au sort en cours…'}
       </p>
       <p className="mt-1 text-xs text-gray-400">Démonstration — noms fictifs</p>
     </div>

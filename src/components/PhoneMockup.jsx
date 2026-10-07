@@ -51,8 +51,8 @@ export default function PhoneMockup() {
       <div className="flex min-h-[480px] flex-col items-center rounded-[2rem] bg-gradient-to-b from-brand-50 to-white px-5 pb-6 pt-12 dark:from-gray-800 dark:to-gray-900">
         {/* Onglets des 2 jeux (illustre la rotation automatique) */}
         <div className="flex gap-1 rounded-full bg-gray-200/70 p-1 text-[11px] font-bold dark:bg-gray-800">
-          <span className={`rounded-full px-3 py-1 transition ${!raffle ? 'bg-white text-brand-700 shadow dark:bg-gray-900 dark:text-brand-300' : 'text-gray-400'}`}>🎡 Roue</span>
-          <span className={`rounded-full px-3 py-1 transition ${raffle ? 'bg-white text-brand-700 shadow dark:bg-gray-900 dark:text-brand-300' : 'text-gray-400'}`}>🎲 Tirage</span>
+          <span className={`rounded-full px-3 py-1 transition ${!raffle ? 'bg-white text-brand-700 shadow dark:bg-gray-900 dark:text-brand-300' : 'text-gray-400'}`}>🎡 Roue de la chance</span>
+          <span className={`rounded-full px-3 py-1 transition ${raffle ? 'bg-white text-brand-700 shadow dark:bg-gray-900 dark:text-brand-300' : 'text-gray-400'}`}>🎲 Tirage au sort</span>
         </div>
 
         {/* Roue de la chance */}
