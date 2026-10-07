@@ -11,7 +11,7 @@ function Stars({ n }) {
   return <span className="text-amber-400">{'★'.repeat(n)}<span className="text-gray-300">{'★'.repeat(5 - n)}</span></span>;
 }
 
-export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null, companySlug = null, brand = { logo: null, color: null }, formCfg = { firstName: true, lastName: true, phone: true, rgpdText: null }, testMode = false, testToken = null, winMessage = null, lang = 'fr' }) {
+export default function GameFlow({ initial, src, err, companyName = null, headline = null, sub = null, wheelColors = null, wheelBg = null, companySlug = null, brand = { logo: null, color: null }, formCfg = { firstName: true, lastName: true, phone: true, rgpdText: null }, testMode = false, testToken = null, winMessage = null, lang = 'fr', gameMode = 'wheel', gameCompanySlug = null }) {
   const searchParams = useSearchParams();
   const [step, setStep] = useState(testMode ? 'wheel' : (initial.step || 'identify'));
   const [spin, setSpin] = useState(initial.spin);
@@ -233,6 +233,11 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
             colors={wheelColors} bgImage={wheelBg} accent={brand.color || '#db2777'}
             spinEndpoint={testMode ? '/api/admin/spin-test' : '/api/spin'} spinToken={testToken} />
           <p className="mt-4 text-center text-sm text-gray-500">Cliquez ou balayez la roue pour lancer — tirage instantané côté serveur.</p>
+          {gameMode !== 'wheel' && (
+            <Link href={`/${gameCompanySlug || ''}/draw`} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline">
+              🎲 Participer aussi au tirage au sort →
+            </Link>
+          )}
         </div>
       )}
 

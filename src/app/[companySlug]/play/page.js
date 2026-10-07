@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { db, getCompanySetting, getCompanySettings } from '@/lib/db';
 import { getPlayerSession } from '@/lib/auth';
 import { getLangFromCookies } from '@/i18n';
+import { db as _db } from '@/lib/db';
 import GameFlow from '@/components/GameFlow';
 
 export const dynamic = 'force-dynamic';
@@ -117,7 +118,7 @@ export default async function PlayPage({ params, searchParams }) {
       companyName={company.name} headline={headline} sub={sub}
       wheelColors={wheelColors} wheelBg={wheelBg}
       brand={brand} formCfg={formCfg} winMessage={winMessage}
-      lang={company.defaultLocale || getLangFromCookies()}
+      lang={company.defaultLocale || getLangFromCookies()} gameMode={gameMode} gameCompanySlug={company.slug}
       testMode={Boolean(testToken)} testToken={testToken} />;
   } catch (e) {
     return <NotReady companyName={company.name} />;

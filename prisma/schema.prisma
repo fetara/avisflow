@@ -53,6 +53,7 @@ model Company {
   settings  CompanySetting[]
   emailTemplates EmailTemplate[]
   campaigns Campaign[]
+  raffleDraws RaffleDraw[]
   createdAt DateTime @default(now())
 }
 
@@ -251,6 +252,53 @@ model Subscription {
 
   @@index([companyId, status])
   @@index([status, activatedAt])
+}
+
+// ---------- Tirage au sort (étape 3) ----------
+model RaffleDraw {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  startsAt  DateTime?
+  endsAt    DateTime?
+  winnersCount Int   @default(1)
+  prizes    Json?    // [{rank, label}]
+  excludePastWinners Boolean @default(true)
+  status    String   @default("DRAFT") // DRAFT | OPEN | DONE
+  seed      String?  // aléa crypto + horodatage (équité vérifiable)
+  drawnAt   DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  entries   RaffleEntry[]
+  winners   RaffleWinner[]
+  @@index([companyId, status])
+}
+
+model RaffleEntry {
+  id       String @id @default(cuid())
+  drawId   String
+  draw     RaffleDraw @relation(fields: [drawId], references: [id], onDelete: Cascade)
+  name     String
+  email    String?
+  source   String @default("onsite") // onsite | imported | collected
+  createdAt DateTime @default(now())
+
+  @@unique([drawId, email])
+}
+
+model RaffleWinner {
+  id       String @id @default(cuid())
+  drawId   String
+  draw     RaffleDraw @relation(fields: [drawId], references: [id], onDelete: Cascade)
+  run      Int    @default(1) // 1 = premier tirage, 2+ = relances (historique conservé)
+  rank     Int
+  name     String
+  email    String?
+  prize    String
+  drawnAt  DateTime @default(now())
+
+  @@index([drawId, run, rank])
 }
 
 // ---------- Marketing : templates + campagnes email (phase 2) ----------

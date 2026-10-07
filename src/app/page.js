@@ -177,6 +177,11 @@ export default async function LandingPage() {
             <Link href="/inscription" className="btn-primary"><Rocket className="h-5 w-5" /> {T('common.start')}</Link>
             <a href="#etapes" className="btn-secondary"><PlayCircle className="h-5 w-5" /> {T('common.seeHow')}</a>
           </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">{T('landing.modeWheel')}</span>
+            <span className="text-xs text-gray-400">+</span>
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">{T('landing.modeRaffle')}</span>
+          </div>
           <p className="mt-3 text-sm text-gray-400">{T('landing.freeTrial')}</p>
         </div>
         <PhoneMockup />
@@ -285,6 +290,7 @@ export default async function LandingPage() {
             { icon: '🎨', en: ['Customizable wheel', 'Colors, background, logo, messages: your brand.'], ar: ['عجلة قابلة للتخصيص', 'الألوان والخلفية والشعار والرسائل بهويتك.'], fr: ['Roue personnalisable', 'Couleurs, image de fond, logo, messages : votre image de marque.'] },
             { icon: '⭐', en: ['Moderated reviews', 'Configurable auto-publish, no unwanted reviews online.'], ar: ['تقييمات مُدارة', 'نشر تلقائي قابل للضبط، لا تقييمات غير مرغوبة.'], fr: ['Avis modérés', 'Auto-publication configurable, aucun avis indésirable en ligne.'] },
             { icon: '🏆', en: ['Winners management', 'Unique gift codes with in-store QR validation.'], ar: ['إدارة الفائزين', 'رموز هدايا فريدة مع تحقق QR في المتجر.'], fr: ['Gestion des gagnants', 'Codes cadeaux uniques avec QR de validation en caisse.'] },
+            { icon: '🎲', en: ['Live raffle draw', 'Project the winners draw at your event — verifiable fairness.'], ar: ['سحب مباشر', 'اعرض سحب الفائزين في فعاليتك — عدالة قابلة للتحقق.'], fr: ['Tirage au sort en direct', 'Projetez le tirage des gagnants à votre événement — équité vérifiable.'] },
             { icon: '📊', en: ['Clear statistics', 'Entries, reviews, conversion — per QR and period.'], ar: ['إحصائيات واضحة', 'المشاركات والتقييمات والتحويل — لكل رمز وكل فترة.'], fr: ['Statistiques claires', 'Participations, avis, conversion — par QR et par période.'] },
             { icon: '🔐', en: ['Isolated data', 'Each business strictly owns its own.'], ar: ['بيانات معزولة', 'لكل شركة بياناتها الخاصة بشكل صارم.'], fr: ['Données isolées', 'Chaque entreprise a strictement les siennes.'] },
           ].map((f) => {

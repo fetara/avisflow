@@ -19,6 +19,7 @@ const SECTIONS = [
     { href: '/lots', label: 'Lots de la roue', icon: 'gift', perm: 'manage_prizes' },
     { href: '/qr-codes', label: 'QR codes', icon: 'qrcode', perm: 'manage_qrcodes' },
     { href: '/gagnants', label: 'Gagnants', icon: 'trophy', perm: 'view_customers' },
+    { href: '/tirage', label: 'Tirage au sort', icon: 'dices', perm: null },
   ] },
   { title: 'Marketing', items: [
     { href: '/campagnes', label: 'Campagnes e-mail', icon: 'megaphone', perm: null },

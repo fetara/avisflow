@@ -40,6 +40,9 @@ export default async function AvisEntreprisePage({ params, searchParams }) {
   let pages = 1;
   try {
     company = await db.company.findUnique({ where: { slug: companySlug } });
+    if (company) {
+      hasDraw = (await db.raffleDraw.count({ where: { companyId: company.id, status: { in: ['OPEN', 'DONE'] } } })) > 0;
+    }
     // Seules les entreprises actives et publiques sont consultables
     if (!company || !company.active || !company.isPublic) {
       return <ErrorPage title="Entreprise introuvable" message="Cette entreprise n'existe pas ou n'est pas visible publiquement." />;
@@ -100,9 +103,16 @@ export default async function AvisEntreprisePage({ params, searchParams }) {
                 <span className="text-gray-400">Pas encore d’avis</span>
               )}
             </p>
-            <Link href={`/${company.slug}/play`} className="mt-3 inline-block rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-brand-700">
-              🎡 Jouer à la roue
-            </Link>
+            <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+              <Link href={`/${company.slug}/play`} className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-brand-700">
+                🎡 Jouer à la roue
+              </Link>
+              {hasDraw && (
+                <Link href={`/${company.slug}/draw`} className="rounded-xl border border-brand-300 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50">
+                  🎲 Participer au tirage
+                </Link>
+              )}
+            </div>
           </div>
         </header>
 
