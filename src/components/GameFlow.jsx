@@ -238,7 +238,7 @@ export default function GameFlow({ initial, src, err, companyName = null, headli
             colors={wheelColors} bgImage={wheelBg} accent={brand.color || '#db2777'}
             spinEndpoint={testMode ? '/api/admin/spin-test' : '/api/spin'} spinToken={testToken} />
           <p className="mt-4 text-center text-sm text-gray-500">Cliquez ou balayez la roue pour lancer — tirage instantané côté serveur.</p>
-          {gameMode !== 'wheel' && (
+          {(gameMode === 'both' || gameMode === 'raffle') && (
             <Link href={`/${gameCompanySlug || ''}/draw`} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline">
               🎲 Participer aussi au tirage au sort →
             </Link>

@@ -80,18 +80,12 @@ export default function ReglagesPage() {
   if (!settings) return <p className="text-gray-400">Chargement…</p>;
 
   // ---------- Apparence de la roue ----------
-  let wheelColors = [];
-  try { wheelColors = JSON.parse(settings.WHEEL_COLORS || '[]'); } catch { wheelColors = []; }
-  const wheelBg = settings.WHEEL_BG_IMAGE || '';
 
   // lecture avec valeur par défaut (clés booléennes : activées si absentes)
   const val = (key, def = '') => (settings[key] !== undefined && settings[key] !== '' ? settings[key] : def);
   const flag = (key) => val(key, 'true') === 'true';
   function setFlag(key, checked) {
     setSettings({ ...settings, [key]: checked ? 'true' : 'false' });
-  }
-  function setWheelColors(list) {
-    setSettings({ ...settings, WHEEL_COLORS: JSON.stringify(list) });
   }
   function onLogoPick(file) {
     if (!file) return;
@@ -167,86 +161,6 @@ export default function ReglagesPage() {
           </div>
         </form>
       )}
-
-      {/* Apparence de la roue : couleurs des segments + image de fond + aperçu en direct */}
-      <form onSubmit={save} className="card space-y-4">
-        <h2 className="font-bold">🎡 Roue de la chance — apparence</h2>
-        <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
-        <div className="space-y-4">
-        <div>
-          <label className="label">Couleurs des segments (alterne sur la roue)</label>
-          <div className="flex flex-wrap items-center gap-2">
-            {(wheelColors.length ? wheelColors : ['']).map((c, i) => (
-              <div key={i} className="flex items-center gap-1">
-                <input type="color" aria-label={`Couleur ${i + 1}`}
-                  value={/^#[0-9a-fA-F]{6}$/.test(c) ? c : '#f472b6'}
-                  onChange={(e) => setWheelColors(wheelColors.map((x, j) => (j === i ? e.target.value : x)))} />
-                {wheelColors.length > 0 && (
-                  <button type="button" aria-label="Retirer cette couleur"
-                    onClick={() => setWheelColors(wheelColors.filter((_, j) => j !== i))}
-                    className="text-xs text-red-500 hover:underline">✕</button>
-                )}
-              </div>
-            ))}
-            <button type="button" onClick={() => setWheelColors([...wheelColors, '#f472b6'])}
-              className="rounded-lg border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">+ Couleur</button>
-          </div>
-          <p className="mt-1 text-xs text-gray-400">Astuce : 2 à 5 couleurs qui alternent rendent la roue plus lisible. Vide = palette par défaut.</p>
-        </div>
-        <div>
-          <label className="label">Image de fond de la roue (affichée sous les segments)</label>
-          <div className="flex items-center gap-3">
-            {wheelBg
-              ? // eslint-disable-next-line @next/next/no-img-element
-                <img src={wheelBg} alt="Aperçu du fond" className="h-16 w-16 rounded-xl object-cover" />
-              : <span className="flex h-16 w-16 items-center justify-center rounded-xl bg-gray-100 text-2xl">🖼️</span>}
-            <label className="cursor-pointer rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
-              {wheelBg ? 'Changer l’image' : 'Choisir une image'}
-              <input type="file" accept="image/*" className="hidden"
-                onChange={(e) => { onBgPick(e.target.files?.[0]); e.target.value = ''; }} />
-            </label>
-            {wheelBg && (
-              <button type="button" onClick={() => setSettings({ ...settings, WHEEL_BG_IMAGE: '' })}
-                className="text-sm text-red-500 hover:underline">Retirer</button>
-            )}
-          </div>
-          <p className="mt-1 text-xs text-gray-400">JPG/PNG, 2 Mo max. Un voile clair est appliqué pour garder les textes lisibles.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="btn-primary !py-2"><Save className="h-4 w-4" /> Enregistrer l'apparence</button>
-          {saved && <span className="text-sm text-emerald-600">✓ Enregistré</span>}
-          {error && <span className="text-sm text-red-600">{error}</span>}
-        </div>
-        </div>
-        {/* Aperçu en direct : se met à jour à chaque changement de couleur/fond */}
-        <div className="justify-self-center rounded-2xl bg-gray-50 p-4">
-          <WheelPreview
-            prizes={previewPrizes || [{ label: 'Lot 1' }, { label: 'Lot 2' }, { label: 'Lot 3' }, { label: 'Lot 4' }]}
-            colors={wheelColors.length ? wheelColors : null}
-            bgImage={wheelBg || null}
-            accent={/^#[0-9a-fA-F]{6}$/.test(val('BRAND_COLOR')) ? val('BRAND_COLOR') : '#db2777'}
-          />
-        </div>
-        </div>
-      </form>
-
-
-      {/* ⭐ Avis : modération + lien Google */}
-      <form onSubmit={save} className="card space-y-4">
-        <h2 className="font-bold">⭐ Avis</h2>
-        {FIELDS.map(([key, label]) => (
-          <div key={key}>
-            <label className="label">{label}</label>
-            <input className="input" value={settings[key] || ''} onChange={(e) => setSettings({ ...settings, [key]: e.target.value })} />
-            {key === 'AUTO_APPROVE_MIN_RATING' && <p className="mt-1 text-xs text-gray-400">Ex. 4 → les avis de 4 et 5 étoiles sont publiés automatiquement.</p>}
-          </div>
-        ))}
-        <div className="flex items-center gap-3">
-          <button className="btn-primary !py-2"><Save className="h-4 w-4" /> Enregistrer</button>
-          {saved && <span className="text-sm text-emerald-600">✓ Enregistré</span>}
-          {error && <span className="text-sm text-red-600">{error}</span>}
-        </div>
-      </form>
       {/* Formulaire joueurs + anti-abus + campagne */}
       <div className="grid gap-6 lg:grid-cols-2">
         <form onSubmit={save} className="card space-y-4">
@@ -267,30 +181,12 @@ export default function ReglagesPage() {
               onChange={(e) => setSettings({ ...settings, FORM_RGPD_TEXT: e.target.value })} />
           </div>
           <div>
-            <label className="label" htmlFor="winmsg">Message de victoire (écran « gagné »)</label>
-            <input id="winmsg" className="input" maxLength={100} placeholder="Félicitations !"
-              value={val('WIN_MESSAGE')}
-              onChange={(e) => setSettings({ ...settings, WIN_MESSAGE: e.target.value })} />
-          </div>
-          <div>
             <label className="label" htmlFor="limitmode">Limite anti-abus</label>
             <select id="limitmode" className="input" value={val('SPIN_LIMIT_MODE', 'lifetime')}
               onChange={(e) => setSettings({ ...settings, SPIN_LIMIT_MODE: e.target.value })}>
               <option value="lifetime">1 participation par e-mail (à vie)</option>
               <option value="daily">1 participation par e-mail et par jour</option>
             </select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="label" htmlFor="cstart">Début de campagne</label>
-              <input id="cstart" type="date" className="input" value={val('CAMPAIGN_START')}
-                onChange={(e) => setSettings({ ...settings, CAMPAIGN_START: e.target.value })} />
-            </div>
-            <div>
-              <label className="label" htmlFor="cend">Fin de campagne</label>
-              <input id="cend" type="date" className="input" value={val('CAMPAIGN_END')}
-                onChange={(e) => setSettings({ ...settings, CAMPAIGN_END: e.target.value })} />
-            </div>
           </div>
           <div className="flex items-center gap-3">
             <button className="btn-primary !py-2">Enregistrer</button>

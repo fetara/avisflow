@@ -11,12 +11,13 @@ export default function ClientsPage() {
   const [sources, setSources] = useState([]);
   const [q, setQ] = useState('');
   const [source, setSource] = useState('');
+  const [game, setGame] = useState('');
 
   const load = useCallback(async () => {
     const qs = new URLSearchParams({ ...(q && { q }), ...(source && { source }) });
     const res = await fetch(`/api/${companySlug}/customers?${qs}`);
     if (res.ok) setCustomers((await res.json()).customers || []);
-  }, [q, source]);
+  }, [q, source, game]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { fetch(`/api/${companySlug}/qrcodes`).then((r) => r.json()).then((d) => setSources(d.qrs || [])); }, []);
@@ -45,6 +46,14 @@ export default function ClientsPage() {
           <select className="input !py-2" value={source} onChange={(e) => setSource(e.target.value)}>
             <option value="">Toutes</option>
             {sources.map((s) => <option key={s.id} value={s.slug}>{s.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="label">Jeu</label>
+          <select className="input !py-2" value={game} onChange={(e) => setGame(e.target.value)}>
+            <option value="">Tous les jeux</option>
+            <option value="roulette">Roulette (ont joué)</option>
+            <option value="tirage">Tirage (inscrits)</option>
           </select>
         </div>
       </div>

@@ -12,6 +12,9 @@ const prizeSchema = z.object({
   photo: z.string().max(3_000_000).nullable().optional(), // data URL de l'illustration
   labelEn: z.string().max(80).nullable().optional(),
   labelAr: z.string().max(80).nullable().optional(),
+  // Disponibilité par jeu (architecture unifiée) — au moins un des deux requis
+  inWheel: z.boolean().optional(),
+  inRaffle: z.boolean().optional(),
 });
 
 export async function GET(req) {
@@ -42,6 +45,10 @@ export async function PATCH(req) {
   const parsed = prizeSchema.extend({ id: z.string() }).safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: 'Lot invalide.' }, { status: 400 });
   const { id, ...data } = parsed.data;
+  // Un lot doit rester disponible dans AU MOINS un jeu
+  if (data.inWheel === false && data.inRaffle === false) {
+    return NextResponse.json({ error: 'Un lot doit rester disponible dans au moins un jeu (roulette ou tirage).' }, { status: 400 });
+  }
   const prize = await db.prize.updateMany({ where: { id, companyId: companyScope(guard) }, data }).catch(() => null);
   if (!prize || prize.count === 0) {
     if (await db.prize.findUnique({ where: { id } })) await logCrossAttempt(guard.admin.id, 'Prize', id);

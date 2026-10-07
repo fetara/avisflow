@@ -19,6 +19,7 @@ const ALLOWED_KEYS = [
   'SPIN_LIMIT_MODE',
   // Campagne
   'CAMPAIGN_START', 'CAMPAIGN_END',
+  'GAME_ACTIVE', // jeu affiché sur la page publique (roulette | tirage)
   // Branding
   'BRAND_LOGO', 'BRAND_COLOR',
 ];

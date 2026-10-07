@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { FlaskConical, Download, Plus, Trash2, Pencil, Eye } from 'lucide-react';
+import { FlaskConical, Download, Plus, Trash2, Pencil, Eye, MonitorPlay, Save } from 'lucide-react';
 
 import { useCallback, useEffect, useState } from 'react';
 
@@ -10,6 +10,8 @@ export default function QrCodesPage() {
   const [qrs, setQrs] = useState([]);
   const [form, setForm] = useState({ label: '', slug: '', destination: '/jeu', expiresAt: '' });
   const [error, setError] = useState('');
+  const [gameActive, setGameActive] = useState('roulette');
+  const [savedGame, setSavedGame] = useState(false);
   const [editing, setEditing] = useState(null); // { id, label, slug, destination, expiresAt }
 
   const load = useCallback(async () => {
@@ -75,7 +77,15 @@ export default function QrCodesPage() {
       <h1 className="text-2xl font-bold">QR codes en boutique</h1>
       <a href={`/api/${companySlug}/play-qr`} download
         className="mb-4 inline-block rounded-lg border border-brand-300 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50">
-        ⬇️ QR de la page de jeu (/{companySlug}/play)
+        ⬇️ QR jeu principal (/{companySlug}/play)
+      </a>
+      <a href={`/api/${companySlug}/play-qr?game=roulette`} download
+        className="inline-flex items-center gap-1.5 rounded-lg border border-brand-300 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50">
+        ⬇️ QR Roulette (/play/roulette)
+      </a>
+      <a href={`/api/${companySlug}/play-qr?game=tirage`} download
+        className="inline-flex items-center gap-1.5 rounded-lg border border-brand-300 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50">
+        ⬇️ QR Tirage (/play/tirage)
       </a>
       <p className="text-sm text-gray-500">
         QR dynamiques : le code encode <code className="rounded bg-gray-100 px-1">/r/{"{slug}"}</code> —
@@ -108,6 +118,29 @@ export default function QrCodesPage() {
           <button className="btn-primary !py-2"><Plus className="h-4 w-4" /> Créer le QR code</button>
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>
+      </form>
+
+      {/* Jeu affiché sur la page publique */}
+      <form onSubmit={async (e) => {
+        e.preventDefault();
+        const res = await fetch(`/api/${companySlug}/settings`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ GAME_ACTIVE: gameActive }),
+        });
+        if (!res.ok) { setError('Erreur lors de la sauvegarde'); return; }
+        setSavedGame(true); setTimeout(() => setSavedGame(false), 3000);
+      }} className="card mb-6 flex flex-wrap items-end gap-4">
+        <div className="min-w-56">
+          <label className="label" htmlFor="gameactive">🎯 Jeu affiché sur la page publique</label>
+          <select id="gameactive" className="input !py-2" value={gameActive}
+            onChange={(e) => setGameActive(e.target.value)}>
+            <option value="roulette">🎡 Roulette de la chance</option>
+            <option value="tirage">🎲 Tirage au sort</option>
+          </select>
+        </div>
+        <button className="btn-primary !py-2"><Save className="h-4 w-4" /> Enregistrer</button>
+        {savedGame && <span className="text-sm text-emerald-600">✓ Enregistré</span>}
+        <p className="w-full text-xs text-gray-400">Le QR principal (/{companySlug}/play) ouvrira ce jeu. Les QR roulette et tirage ci-dessous pointent vers chaque jeu spécifiquement.</p>
       </form>
 
       {/* Liste */}

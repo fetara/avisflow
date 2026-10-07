@@ -21,6 +21,17 @@ export async function GET(req) {
   }
   if (source) where.sourceQr = { slug: source };
 
+  // Filtre par jeu : roulette (a joué) / tirage (inscrit au tirage)
+  const game = sp.get('game');
+  if (game === 'roulette') where.spins = { some: {} };
+  if (game === 'tirage') {
+    const entryEmails = await db.raffleEntry.findMany({
+      where: { draw: { companyId: companyScope(guard) } },
+      select: { email: true },
+    });
+    where.email = { in: entryEmails.map((e) => e.email) };
+  }
+
   const customers = await db.customer.findMany({
     where,
     include: {

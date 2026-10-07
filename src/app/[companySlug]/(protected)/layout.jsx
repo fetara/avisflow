@@ -15,20 +15,25 @@ const SECTIONS = [
     { href: '/clients', label: 'Clients', icon: 'users', perm: 'view_customers' },
     { href: '/avis', label: 'Avis', icon: 'star', perm: 'moderate_reviews' },
   ] },
-  { title: 'Engagement', items: [
-    { href: '/lots', label: 'Lots de la roue', icon: 'gift', perm: 'manage_prizes' },
-    { href: '/qr-codes', label: 'QR codes', icon: 'qrcode', perm: 'manage_qrcodes' },
+  { title: 'Roulette de la chance', items: [
+    { href: '/lots', label: 'Lots & probabilités', icon: 'gift', perm: 'manage_prizes' },
+    { href: '/roulette', label: 'Apparence & période', icon: 'wheel', perm: 'configure_wheel' },
     { href: '/gagnants', label: 'Gagnants', icon: 'trophy', perm: 'view_customers' },
-    { href: '/tirage', label: 'Tirage au sort', icon: 'dices', perm: null },
+  ] },
+  { title: 'Tirage au sort', items: [
+    { href: '/tirage', label: 'Config. & lancement', icon: 'dices', perm: null },
+  ] },
+  { title: 'Page publique', items: [
+    { href: '/qr-codes', label: 'QR codes & jeu affiché', icon: 'qrcode', perm: 'manage_qrcodes' },
   ] },
   { title: 'Marketing', items: [
     { href: '/campagnes', label: 'Campagnes e-mail', icon: 'megaphone', perm: null },
     { href: '/emails', label: 'E-mails', icon: 'mail', perm: null },
-    { href: '/sms', label: 'SMS', icon: 'megaphone', perm: null },
+    { href: '/sms', label: 'SMS', icon: 'phone', perm: null },
   ] },
   { title: 'Administration', items: [
     { href: '/abonnement', label: 'Abonnement', icon: 'creditcard', perm: null },
-    { href: '/reglages', label: 'Paramètres', icon: 'settings', perm: 'configure_wheel' },
+    { href: '/reglages', label: 'Paramètres', icon: 'settings', perm: null },
   ] },
 ];
 

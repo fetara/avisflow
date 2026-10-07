@@ -20,6 +20,7 @@ const ICONS = {
   server: Server,
   audit: ScrollText,
   dices: Dices,
+  wheel: LoaderCircle,
   building: Building2,
 };
 

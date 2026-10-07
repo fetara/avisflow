@@ -23,7 +23,10 @@ export async function GET(req) {
   if (!slug) return new NextResponse('Entreprise introuvable', { status: 404 });
 
   const APP_URL = (await getAppUrl()) || new URL(req.url).origin;
-  const url = `${APP_URL}/${slug}/play`;
+  // ?game=roulette|tirage -> QR ciblé sur le jeu demandé (deux écrans en boutique)
+  const game = new URL(req.url).searchParams.get('game');
+  const suffix = game === 'roulette' ? '/roulette' : game === 'tirage' ? '/tirage' : '';
+  const url = `${APP_URL}/${slug}/play${suffix}`;
   const png = await QRCode.toBuffer(url, { type: 'png', width: 600, margin: 2 });
   return new NextResponse(png, {
     headers: {

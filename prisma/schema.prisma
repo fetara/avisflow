@@ -152,6 +152,9 @@ model Prize {
   labelEn   String?
   labelAr   String?
   weight    Int      @default(1)
+  // Disponibilité par jeu (architecture unifiée) — stock commun aux deux
+  inWheel   Boolean  @default(true)
+  inRaffle  Boolean  @default(true)
   stock     Int?     // null = illimité
   active    Boolean  @default(true)
   sortOrder Int      @default(0)
@@ -306,6 +309,7 @@ model RaffleEntry {
   name     String
   email    String?
   source   String @default("onsite") // onsite | imported | collected
+  gameType String @default("tirage")
   createdAt DateTime @default(now())
 
   @@unique([drawId, email])

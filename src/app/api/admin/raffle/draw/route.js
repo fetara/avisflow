@@ -42,6 +42,13 @@ export async function POST(req) {
   const prizes = Array.isArray(draw.prizes) ? draw.prizes : [];
   const winnersCount = Math.min(draw.winnersCount, eligible.length);
 
+  // Résolution des lots du rang depuis les LOTS PARTAGÉS (stock commun décrémenté)
+  const resolvedPrizes = [];
+  for (const p of prizes) {
+    const shared = p.prizeId ? await db.prize.findUnique({ where: { id: p.prizeId } }) : null;
+    resolvedPrizes.push({ rank: p.rank, prizeId: p.prizeId, label: shared?.label || `Lot n°${p.rank}`, shared });
+  }
+
   // Mélange Fisher-Yates avec randomInt (crypto)
   const pool = [...eligible];
   for (let i = pool.length - 1; i > 0; i--) {
@@ -57,8 +64,28 @@ export async function POST(req) {
   for (let rank = 1; rank <= winnersCount; rank++) {
     const entry = pool.shift();
     if (!entry) break;
-    const prize = prizes.find((p) => p.rank === rank)?.label || `Gagnant n°${rank}`;
-    winners.push({ rank, name: entry.name, email: entry.email, prize });
+    const cfgPrize = resolvedPrizes.find((p) => p.rank === rank);
+    let prizeLabel = cfgPrize?.label || `Gagnant n°${rank}`;
+    // Stock PARTAGÉ : décrémente le lot commun (si stock insuffisant -> fallback sur
+    // un autre lot « pour tirage » disponible, sinon le rang est attribué à titre symbolique)
+    let decremented = false;
+    if (cfgPrize?.shared) {
+      const dec = await db.prize.updateMany({
+        where: { id: cfgPrize.shared.id, companyId, stock: { gt: 0 } },
+        data: { stock: { decrement: 1 } },
+      });
+      decremented = dec.count > 0;
+      if (cfgPrize.shared.stock != null && !decremented) {
+        const fallback = await db.prize.findFirst({
+          where: { companyId, active: true, inRaffle: true, id: { not: cfgPrize.shared.id }, stock: { gt: 0 } },
+        });
+        if (fallback) {
+          await db.prize.update({ where: { id: fallback.id }, data: { stock: { decrement: 1 } } });
+          prizeLabel = fallback.label;
+        }
+      }
+    }
+    winners.push({ rank, name: entry.name, email: entry.email, prize: prizeLabel });
   }
 
   await db.raffleWinner.createMany({

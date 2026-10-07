@@ -42,7 +42,7 @@ export async function POST(req) {
     if (!gate.ok) return NextResponse.json({ error: gate.reason }, { status: 403 });
   }
 
-  const prizes = await db.prize.findMany({ where: { companyId: customer.companyId }, orderBy: { sortOrder: 'asc' } });
+  const prizes = await db.prize.findMany({ where: { companyId: customer.companyId, inWheel: true }, orderBy: { sortOrder: 'asc' } });
   const prize = weightedPick(prizes);
   if (!prize) return NextResponse.json({ error: 'Aucun lot disponible.' }, { status: 503 });
 
@@ -78,7 +78,7 @@ export async function GET(req) {
   const session = await getPlayerSession();
   const customer = session?.sub ? await db.customer.findUnique({ where: { id: session.sub } }) : null;
   const prizes = await db.prize.findMany({
-    where: { active: true, companyId: customer?.companyId ?? null },
+    where: { active: true, inWheel: true, companyId: customer?.companyId ?? null },
     orderBy: { sortOrder: 'asc' },
     select: { id: true, label: true, weight: true },
   });

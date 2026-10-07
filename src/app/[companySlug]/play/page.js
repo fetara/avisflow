@@ -118,7 +118,7 @@ export default async function PlayPage({ params, searchParams }) {
       companyName={company.name} headline={headline} sub={sub}
       wheelColors={wheelColors} wheelBg={wheelBg}
       brand={brand} formCfg={formCfg} winMessage={winMessage}
-      lang={company.defaultLocale || getLangFromCookies()} gameMode={gameMode} gameCompanySlug={company.slug}
+      lang={company.defaultLocale || getLangFromCookies()} gameMode={gameMode} gameActive={gameActive} gameCompanySlug={company.slug}
       testMode={Boolean(testToken)} testToken={testToken} />;
   } catch (e) {
     return <NotReady companyName={company.name} />;

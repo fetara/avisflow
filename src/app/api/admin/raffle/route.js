@@ -10,7 +10,7 @@ const upsertSchema = z.object({
   startsAt: z.string().optional().nullable(),
   endsAt: z.string().optional().nullable(),
   winnersCount: z.number().int().min(1).max(50),
-  prizes: z.array(z.object({ rank: z.number().int().min(1), label: z.string().trim().max(120) })).max(50),
+  prizes: z.array(z.object({ rank: z.number().int().min(1), prizeId: z.string() })).max(50),
   excludePastWinners: z.boolean().default(true),
   open: z.boolean().default(true), // true = inscriptions ouvertes (status OPEN)
 });
@@ -33,11 +33,16 @@ export async function GET(req) {
   const companyId = await resolveCompanyId(req, guard);
   if (!companyId) return NextResponse.json({ error: 'Entreprise introuvable.' }, { status: 404 });
 
-  const [draw, settings] = await Promise.all([
+  const [draw, settings, rafflePrizes] = await Promise.all([
     currentDraw(companyId),
     db.companySetting.findMany({ where: { companyId, key: 'GAME_MODE' }, select: { value: true } }),
+    db.prize.findMany({
+      where: { companyId, active: true, inRaffle: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true, label: true, photo: true, stock: true },
+    }),
   ]);
-  return NextResponse.json({ draw, gameMode: settings[0]?.value || 'wheel' });
+  return NextResponse.json({ draw, gameMode: settings[0]?.value || 'wheel', rafflePrizes });
 }
 
 // PUT : créer/mettre à jour la configuration du tirage.
@@ -58,6 +63,7 @@ export async function PUT(req) {
     startsAt: d.startsAt ? new Date(d.startsAt) : null,
     endsAt: d.endsAt ? new Date(d.endsAt) : null,
     winnersCount: d.winnersCount,
+    // Rangs pointant vers les LOTS PARTAGÉS (marqués « pour tirage »)
     prizes: d.prizes.sort((a, b) => a.rank - b.rank),
     excludePastWinners: d.excludePastWinners,
     status: d.open ? 'OPEN' : 'DRAFT',
