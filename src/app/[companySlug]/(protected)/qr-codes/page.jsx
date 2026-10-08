@@ -107,7 +107,7 @@ export default function QrCodesPage() {
         <div>
           <label className="label">Destination</label>
           <input className="input !py-2" value={form.destination}
-            onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder="/jeu" />
+            onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder={`/${companySlug}/play`} />
         </div>
         <div>
           <label className="label">Expire le (optionnel)</label>

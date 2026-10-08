@@ -49,6 +49,12 @@ async function defaultDestination(req, companyId = null) {
     const company = await db.company.findUnique({ where: { id: cid }, select: { slug: true } });
     if (company?.slug) return `/${company.slug}/play`;
   }
+  // Repli super admin : entreprise du slug visité (header posé par le middleware)
+  const slugHeader = req.headers.get('x-company-slug');
+  if (slugHeader) {
+    const company = await db.company.findUnique({ where: { slug: slugHeader }, select: { slug: true } });
+    if (company?.slug) return `/${company.slug}/play`;
+  }
   return '/';
 }
 
