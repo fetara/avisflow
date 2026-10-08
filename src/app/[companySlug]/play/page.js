@@ -121,6 +121,16 @@ export default async function PlayPage({ params, searchParams }) {
       lang={company.defaultLocale || getLangFromCookies()} gameMode={gameMode} gameActive={gameActive} gameCompanySlug={company.slug}
       testMode={Boolean(testToken)} testToken={testToken} />;
   } catch (e) {
-    return <NotReady companyName={company.name} />;
+    // Erreur technique (ex : migration non appliquée) : distinct de « jeu pas configuré »
+    console.error('play page:', e.message?.slice(0, 200));
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-gray-100 px-4 text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-3xl">⚠️</div>
+        <h1 className="text-2xl font-bold">Erreur technique du jeu</h1>
+        <p className="mt-2 max-w-md text-sm text-gray-500">
+          Le jeu n’a pas pu être chargé (base de données pas à jour ou indisponible). Contactez le support si cela persiste.
+        </p>
+      </main>
+    );
   }
 }
