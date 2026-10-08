@@ -31,6 +31,7 @@ export async function runSubscriptionTransitions() {
 
 // Abonnement effectif d'une entreprise (transitions appliquées d'abord).
 export async function getCompanySubscription(companyId) {
+  if (!companyId) return null;
   await runSubscriptionTransitions();
   return db.subscription.findFirst({
     where: { companyId },
@@ -40,6 +41,7 @@ export async function getCompanySubscription(companyId) {
 
 // Détermine le statut d'accès. Retourne { allowed, reason } côté serveur.
 export async function canCreateQrCode(companyId) {
+  if (!companyId) return { ok: true }; // hors entreprise (hérité) : pas de plan à appliquer
   if (!(await subscriptionsEnabled())) return { ok: true };
   const sub = await getCompanySubscription(companyId);
   if (!sub || sub.status !== 'ACTIVE') {
@@ -60,6 +62,7 @@ export async function canCreateQrCode(companyId) {
 
 // Nouveau client (identification joueur) : respecte maxCustomers du plan.
 export async function canAddCustomer(companyId) {
+  if (!companyId) return { ok: true };
   if (!(await subscriptionsEnabled())) return { ok: true };
   const sub = await getCompanySubscription(companyId);
   if (!sub || sub.status !== 'ACTIVE') return { ok: false, reason: 'Aucun abonnement actif pour cette entreprise.' };
@@ -75,6 +78,7 @@ export async function canAddCustomer(companyId) {
 
 // Nouvelle participation (tirage) : respecte maxSpins du plan (par mois glissant).
 export async function canAddSpin(companyId) {
+  if (!companyId) return { ok: true };
   if (!(await subscriptionsEnabled())) return { ok: true };
   const sub = await getCompanySubscription(companyId);
   if (!sub || sub.status !== 'ACTIVE') return { ok: false, reason: 'Aucun abonnement actif pour cette entreprise.' };
@@ -100,6 +104,7 @@ export async function hasFeature(companyId, feature) {
 
 // Utilisation vs limites, pour l'affichage « Mon abonnement ».
 export async function getUsage(companyId) {
+  if (!companyId) return null;
   const sub = await getCompanySubscription(companyId);
   if (!sub) return null;
   const plan = await db.subscriptionPlan.findUnique({ where: { id: sub.planId } });

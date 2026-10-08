@@ -27,7 +27,12 @@ export default async function AbonnementPage({ params }) {
     redirect(session.companySlug ? `/${session.companySlug}/abonnement` : '/admin/login');
   }
 
-  const companyId = role === 'COMPANY_ADMIN' ? session.companyId : (session.companyId ?? null);
+  // Super admin visitant un espace : résolution par le slug (session.companyId est null)
+  let companyId = session.companyId;
+  if (!companyId) {
+    const c = await db.company.findUnique({ where: { slug: companySlug }, select: { id: true } });
+    companyId = c?.id ?? null;
+  }
   // Requêtes protégées : si la table subscriptions n'existe pas encore (migration
   // 20260918000000 non appliquée) ou base indisponible, page propre au lieu d'un crash.
   let subs = [];
