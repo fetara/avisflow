@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { TableSkeleton, EmptyState } from '@/components/ui';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw, Zap, ArrowLeftRight } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 
 /* Gestion des abonnements (super admin) : plans + demandes + actions.
@@ -15,6 +15,7 @@ export default function AbonnementsPage() {
   const [status, setStatus] = useState('ALL');
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState(null); // plan en cours d'édition/création
+  const [planChange, setPlanChange] = useState(null); // { sub, plans }
   const { show, Toast } = useToast();
 
   const load = useCallback(async () => {
@@ -83,6 +84,34 @@ export default function AbonnementsPage() {
   }
 
   const fmt = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
+  async function bulk(action) {
+    const confirmMsg = {
+      expire_overdue: 'Passer en EXPIRED tous les abonnements actifs dont la date d’échéance est dépassée ?',
+      activate_approved: 'Activer immédiatement TOUTES les demandes approuvées (contourne les délais) ?',
+    }[action];
+    if (!window.confirm(confirmMsg)) return;
+    const res = await fetch('/api/super/subscriptions/bulk', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { show(data.error || 'Erreur', 'error'); return; }
+    show(data.message || 'Effectué ✓');
+    load();
+  }
+
+  function openPlanChange(sub) { setPlanChange({ sub, planSlug: sub.plan.slug }); }
+  async function savePlanChange() {
+    const res = await fetch('/api/super/subscriptions', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: planChange.sub.id, action: 'change_plan', planSlug: planChange.planSlug }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { show(data.error || 'Erreur', 'error'); return; }
+    show('Plan changé ✓');
+    setPlanChange(null);
+    load();
+  }
+
   const STATUS_STYLE = {
     ACTIVE: 'bg-emerald-500/15 text-emerald-400', PENDING: 'bg-amber-500/15 text-amber-400',
     APPROVED: 'bg-sky-500/15 text-sky-400', SUSPENDED: 'bg-red-500/15 text-red-400',
@@ -136,6 +165,16 @@ export default function AbonnementsPage() {
       {/* ---------- Demandes / abonnements ---------- */}
       <section className="space-y-3">
         <h2 className="font-bold text-gray-200">Abonnements & demandes</h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => bulk('expire_overdue')}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-red-800 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-950">
+            <RefreshCw className="h-3.5 w-3.5" /> Expirer les périmés
+          </button>
+          <button onClick={() => bulk('activate_approved')}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-800 px-3 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-950">
+            <Zap className="h-3.5 w-3.5" /> Activer les approuvés
+          </button>
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filtrer par statut"
             className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm">
@@ -192,6 +231,9 @@ export default function AbonnementsPage() {
                         {(s2.status === 'SUSPENDED' || s2.status === 'EXPIRED') && (
                           <button onClick={() => action(s2.id, 'activate_now')} className="rounded bg-emerald-500/20 px-2 py-1 text-xs text-emerald-400 hover:bg-emerald-500/30">Réactiver</button>
                         )}
+                        <button onClick={() => openPlanChange(s2)} className="rounded border border-gray-700 px-2 py-1 text-xs text-gray-300 hover:bg-gray-800" title="Changer de plan">
+                          <ArrowLeftRight className="inline h-3 w-3" /> Plan
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -238,6 +280,29 @@ export default function AbonnementsPage() {
               <button type="button" onClick={() => { setEditing(null); setForm(null); }} className="rounded-lg border border-gray-700 px-4 py-2 text-sm hover:bg-gray-800">Annuler</button>
             </div>
           </form>
+        </div>
+      )}
+      {/* Modale changement de plan */}
+      {planChange && plans && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setPlanChange(null)}>
+          <div className="w-full max-w-md rounded-2xl bg-gray-900 p-6 text-gray-100 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold">Changer de plan</h3>
+            <p className="mt-1 text-xs text-gray-500">
+              {planChange.sub.company.name} — plan actuel : <strong>{planChange.sub.plan.name}</strong>.
+              Le prix suit les conditions du nouveau plan (l’historique est conservé).
+            </p>
+            <select className="mt-4 w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm"
+              value={planChange.planSlug}
+              onChange={(e) => setPlanChange({ ...planChange, planSlug: e.target.value })}>
+              {plans.filter((p) => p.active).map((p) => (
+                <option key={p.id} value={p.slug}>{p.name} — {p.priceMonthly == null ? 'sur devis' : Number(p.priceMonthly) + '€/mois'}</option>
+              ))}
+            </select>
+            <div className="mt-5 flex gap-2">
+              <button onClick={savePlanChange} className="flex-1 rounded-lg bg-amber-500 py-2 text-sm font-bold text-gray-900 hover:bg-amber-400">Changer</button>
+              <button onClick={() => setPlanChange(null)} className="rounded-lg border border-gray-700 px-4 py-2 text-sm hover:bg-gray-800">Annuler</button>
+            </div>
+          </div>
         </div>
       )}
       <Toast />

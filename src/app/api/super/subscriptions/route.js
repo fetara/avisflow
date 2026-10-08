@@ -50,8 +50,9 @@ export async function GET(req) {
 
 const actionSchema = z.object({
   id: z.string().optional(),
-  action: z.enum(['approve', 'reject', 'suspend', 'activate_now', 'cancel', 'extend', 'assign']),
+  action: z.enum(['approve', 'reject', 'suspend', 'activate_now', 'cancel', 'extend', 'assign', 'change_plan', 'expire']),
   days: z.number().int().positive().optional(), // pour extend
+  planSlug: z.string().optional(), // pour assign et change_plan
   // assign : création manuelle d'un abonnement pour une entreprise
   companyId: z.string().optional(),
   planSlug: z.string().optional(),
@@ -115,6 +116,28 @@ export async function PATCH(req) {
   if (!sub) return NextResponse.json({ error: 'Abonnement introuvable.' }, { status: 404 });
 
   const now = new Date();
+
+  // Changement de plan : le prix suit les nouvelles conditions du plan cible,
+  // statut et dates conservés. Journalisé (l'ancien plan reste dans l'historique via l'audit).
+  if (action === 'change_plan') {
+    const newPlan = parsed.data.planSlug
+      ? await db.subscriptionPlan.findUnique({ where: { slug: parsed.data.planSlug } })
+      : null;
+    if (!newPlan || !newPlan.active) return NextResponse.json({ error: 'Plan cible introuvable ou désactivé.' }, { status: 400 });
+    const updated = await db.subscription.update({
+      where: { id },
+      data: { planId: newPlan.id, priceMonthly: newPlan.priceMonthly },
+    });
+    await logAction(guard.admin.id, 'SUBSCRIPTION_PLAN_CHANGED', 'Subscription', id);
+    return NextResponse.json({ ok: true, subscription: { ...updated, priceMonthly: updated.priceMonthly == null ? null : Number(updated.priceMonthly) } });
+  }
+
+  // Expirer immédiatement ce seul abonnement
+  if (action === 'expire') {
+    const updated = await db.subscription.update({ where: { id }, data: { status: 'EXPIRED' } });
+    await logAction(guard.admin.id, 'SUBSCRIPTION_EXPIRED', 'Subscription', id);
+    return NextResponse.json({ ok: true });
+  }
   let data = {};
   let audit = `SUBSCRIPTION_${action.toUpperCase()}`;
 

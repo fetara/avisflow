@@ -36,7 +36,7 @@ export async function GET(req) {
   const subByCompany = {};
   for (const sub of activeSubs) {
     if (!subByCompany[sub.companyId]) {
-      subByCompany[sub.companyId] = { plan: sub.plan.name, status: sub.status, endAt: sub.endAt };
+      subByCompany[sub.companyId] = { id: sub.id, plan: sub.plan.name, status: sub.status, endAt: sub.endAt };
     }
   }
 

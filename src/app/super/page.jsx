@@ -121,6 +121,21 @@ export default function SuperAdminPage() {
     load();
   }
 
+  // Actions rapides sur l'abonnement courant d'une entreprise
+  async function subAction(c, action) {
+    if (!c.subscription?.id) { show('Aucun abonnement à gérer pour cette entreprise.', 'error'); return; }
+    if (action === 'activate_now' && !window.confirm('Activer immédiatement cet abonnement (contourne le délai) ?')) return;
+    if (action === 'suspend' && !window.confirm('Suspendre cet abonnement ?')) return;
+    const res = await fetch('/api/super/subscriptions', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: c.subscription.id, action }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { show(data.error || 'Erreur', 'error'); return; }
+    show('Abonnement mis à jour ✓');
+    load();
+  }
+
   async function toggleSms(c) {
     await fetch(`/api/super/companies/${c.id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -257,12 +272,24 @@ export default function SuperAdminPage() {
                 </td>
                 <td className="p-3">
                   {c.subscription ? (
+                    <>
                     <button onClick={() => openSubEdit(c)} title="Gérer l'abonnement"
                       className="text-left text-xs leading-tight hover:underline">
                       <span className="block font-semibold text-gray-200">{c.subscription.plan}</span>
                       <span className={`block ${c.subscription.status === 'ACTIVE' ? 'text-emerald-400' : 'text-amber-400'}`}>{c.subscription.status}</span>
                       {c.subscription.endAt && <span className="block text-gray-500">jusqu'au {new Date(c.subscription.endAt).toLocaleDateString('fr-FR')}</span>}
                     </button>
+                    <span className="mt-1 flex gap-1">
+                      {c.subscription.status !== 'ACTIVE' && (
+                        <button onClick={() => subAction(c, 'activate_now')} title="Activer immédiatement"
+                          className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400 hover:bg-emerald-500/30">⚡ ON</button>
+                      )}
+                      {c.subscription.status === 'ACTIVE' && (
+                        <button onClick={() => subAction(c, 'suspend')} title="Suspendre"
+                          className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400 hover:bg-amber-500/30">⏸ OFF</button>
+                      )}
+                    </span>
+                    </>
                   ) : (
                     <button onClick={() => openSubEdit(c)} className="rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-400 hover:bg-amber-500/30">＋ Attribuer</button>
                   )}
