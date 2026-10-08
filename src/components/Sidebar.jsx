@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Dices, LayoutDashboard, Users, Star, Gift, QrCode, Trophy, CreditCard, Settings, Megaphone, Mail, Server, ScrollText, Building2 } from 'lucide-react';
+import { Dices, LayoutDashboard, Users, Star, Gift, QrCode, Trophy, CreditCard, Settings, Megaphone, Mail, Server, ScrollText, Building2, LoaderCircle, Phone } from 'lucide-react';
 
 // Map des icônes Lucide par clé (les layouts passent une clé, pas un composant)
 const ICONS = {
@@ -21,6 +21,7 @@ const ICONS = {
   audit: ScrollText,
   dices: Dices,
   wheel: LoaderCircle,
+  phone: Phone,
   building: Building2,
 };
 
