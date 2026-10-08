@@ -197,71 +197,77 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Confiance (logos réels) */}
-      {trustLogos.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-12">
-          <p className="text-center text-xs font-bold uppercase tracking-widest text-gray-400">{T('landing.trustTitle')}</p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-6 sm:gap-10">
-            {trustLogos.map((c) => (
-              <Link key={c.id} href={`/entreprises/${c.slug}`} className="text-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={c.logo} alt={c.name} loading="lazy" className="mx-auto h-12 w-auto max-w-[120px] object-contain opacity-75 grayscale transition hover:opacity-100 hover:grayscale-0" />
-                <span className="mt-1 block text-xs text-gray-500">{c.name}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
-      {/* Comment ça marche */}
-      <section id="etapes" className="mx-auto max-w-6xl px-4 py-14">
-        <SectionHead
-          eyebrow={T('common.how')}
-          title={L('From QR scan to repeat visit', 'من مسح QR إلى العودة', 'Du scan QR au retour client')}
-        />
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {FLOW.map((s, i) => {
-            const Icon = s.icon;
-            return (
-              <div key={s.n} className="relative rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                {i < FLOW.length - 1 && <span className="absolute -right-3 top-1/2 hidden -translate-y-1/2 text-brand-400 lg:block rtl:hidden" aria-hidden="true">→</span>}
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600/10 text-brand-600"><Icon className="h-5 w-5" /></span>
-                  <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{s.n}</span>
+      {/* ===== Comment ça marche + Fonctionnalités (brique unique) ===== */}
+      <section id="etapes" className="border-y border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
+        <div className="mx-auto max-w-6xl px-4 py-14">
+          <SectionHead
+            eyebrow={T('common.how')}
+            title={L('From QR scan to repeat visit', 'من مسح QR إلى العودة', 'Du scan QR au retour client')}
+          />
+
+          {/* Les 5 étapes */}
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {FLOW.map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <div key={s.n} className="relative rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                  {i < FLOW.length - 1 && <span className="absolute -right-3 top-1/2 hidden -translate-y-1/2 text-brand-400 lg:block rtl:hidden" aria-hidden="true">→</span>}
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600/10 text-brand-600"><Icon className="h-5 w-5" /></span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{s.n}</span>
+                  </div>
+                  <h3 className="mt-3 font-bold">{T('landing.step' + s.key)}</h3>
+                  <p className="mt-1 text-sm text-gray-500">{T('landing.step' + s.key + 't')}</p>
                 </div>
-                <h3 className="mt-3 font-bold">{T(`landing.step${s.key}`)}</h3>
-                <p className="mt-1 text-sm text-gray-500">{T(`landing.step${s.key}t`)}</p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          {/* Fonctionnalités détaillées */}
+          <div id="fonctionnalites" className="mt-12 border-t border-gray-200 pt-10 dark:border-gray-800">
+            <h3 className="text-center text-xl font-bold">{L('Everything you need to engage customers', 'كل ما تحتاجه لاشراك عملائك', 'Tout ce qu’il faut pour engager vos clients')}</h3>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {FEATURES.map((f) => {
+                const Icon = f.icon;
+                const tx = lang === 'en' ? f.en : lang === 'ar' ? f.ar : f.fr;
+                return (
+                  <div key={f.en[0]} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600/10 text-brand-600"><Icon className="h-5 w-5" /></span>
+                    <h4 className="mt-3 font-bold">{tx[0]}</h4>
+                    <p className="mt-1 text-sm text-gray-500">{tx[1]}</p>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-8 text-center text-xs text-gray-400">
+              {L('Used across sectors:', 'مستخدم في قطاعات متعددة:', 'Utilisé dans de nombreux secteurs :')}{' '}
+              {SECTORS.join(' · ')} — {L('and more.', 'et plus.', 'et plus.')}
+            </p>
+          </div>
         </div>
       </section>
 
-     
-      {/* Fonctionnalités + secteurs */}
-      <section id="fonctionnalites" className="mx-auto max-w-6xl px-4 py-14">
-        <SectionHead
-          eyebrow={T('common.features')}
-          title={L('Everything you need to engage customers', 'كل ما تحتاجه لاشراك عملائك', 'Tout ce qu’il faut pour engager vos clients')}
-        />
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((f) => {
-            const Icon = f.icon;
-            const tx = lang === 'en' ? f.en : lang === 'ar' ? f.ar : f.fr;
-            return (
-              <div key={f.en[0]} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600/10 text-brand-600"><Icon className="h-5 w-5" /></span>
-                <h3 className="mt-3 font-bold">{tx[0]}</h3>
-                <p className="mt-1 text-sm text-gray-500">{tx[1]}</p>
-              </div>
-            );
-          })}
+      {/* Tirage en direct (démo animée) */}
+      <section className="mx-auto max-w-6xl px-4 py-14">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div>
+            <Eyebrow>{L('For your events', 'لفعالياتكم', 'Pour vos événements')}</Eyebrow>
+            <h2 className="text-2xl font-extrabold sm:text-3xl">{T('landing.raffleTitle')}</h2>
+            <p className="mt-3 text-gray-600">{T('landing.raffleText')}</p>
+            <ul className="mt-4 space-y-2 text-sm text-gray-600">
+              {[L('Fullscreen projection mode', 'وضع العرض بملء الشاشة', 'Mode projection plein écran'),
+                L('Verifiable randomness (server-side)', 'Aléa vérifiable côté serveur', 'Aléa vérifiable côté serveur'),
+                L('Winners export (CSV)', 'Export des gagnants (CSV)', 'Export des gagnants (CSV)')].map((x) => (
+                <li key={x} className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> {x}</li>
+              ))}
+            </ul>
+            <Link href="/inscription" className="btn-primary mt-6 !py-2.5">{T('common.start')}</Link>
+          </div>
+          <DrawDemo />
         </div>
-        <p className="mt-8 text-center text-xs text-gray-400">
-          {L('Used across sectors:', 'مستخدم في قطاعات متعددة:', 'Utilisé dans de nombreux secteurs :')}{' '}
-          {SECTORS.join(' · ')} — {L('and more.', 'et plus.', 'et plus.')}
-        </p>
       </section>
+
 
       {/* Dashboard illustré */}
       <section className="border-y border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
