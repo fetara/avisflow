@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 export default function QrCodesPage() {
   const { companySlug } = useParams();
   const [qrs, setQrs] = useState([]);
-  const [form, setForm] = useState({ label: '', slug: '', destination: '/jeu', expiresAt: '' });
+  const [form, setForm] = useState({ label: '', slug: '', destination: '', expiresAt: '' });
   const [error, setError] = useState('');
   const [gameActive, setGameActive] = useState('roulette');
   const [savedGame, setSavedGame] = useState(false);
@@ -17,7 +17,10 @@ export default function QrCodesPage() {
   const load = useCallback(async () => {
     const res = await fetch(`/api/${companySlug}/qrcodes`);
     if (res.ok) setQrs((await res.json()).qrs || []);
-  }, []);
+    // Jeu affiché publiquement : valeur réelle en base (CompanySetting.GAME_ACTIVE)
+    const s = await fetch(`/api/${companySlug}/settings`).then((r) => r.json()).catch(() => null);
+    if (s?.settings?.GAME_ACTIVE) setGameActive(s.settings.GAME_ACTIVE);
+  }, [companySlug]);
   useEffect(() => { load(); }, [load]);
 
   async function create(e) {
@@ -30,7 +33,7 @@ export default function QrCodesPage() {
     });
     const data = await res.json();
     if (!res.ok) return setError(data.error);
-    setForm({ label: '', slug: '', destination: '/jeu', expiresAt: '' });
+    setForm({ label: '', slug: '', destination: '', expiresAt: '' });
     load();
   }
 
