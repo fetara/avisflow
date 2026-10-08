@@ -35,7 +35,10 @@ export async function middleware(req) {
 
   const isSuper = session.role === 'SUPER_ADMIN' || session.role === 'admin';
   // Un COMPANY_ADMIN (impersonation incluse) ne peut passer que par le slug de SA entreprise.
-  if (!isSuper || session.impersonatedBy) {
+  // Sessions anciennes sans companySlug dans le JWT : on laisse passer — la vraie
+  // vérification d'isolation est faite dans chaque route via le companyId en base
+  // (admin-guard -> companyScope). On ne bloque jamais sur un JWT incomplet.
+  if ((!isSuper || session.impersonatedBy) && session.companySlug) {
     if (session.companySlug !== slug) {
       return NextResponse.json(
         { error: 'Accès interdit : cette URL ne correspond pas à votre entreprise.' },
@@ -43,7 +46,6 @@ export async function middleware(req) {
       );
     }
   }
-  // Le super admin passe pour tous les slugs (sélection ou impersonation).
 
   // Réécriture transparente vers les handlers existants scopés par session.
   // Le slug voyage dans un header : permet aux handlers (ex. réglages) de résoudre
