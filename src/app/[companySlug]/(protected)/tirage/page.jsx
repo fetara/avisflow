@@ -3,16 +3,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Plus, Dices, Download, Trash2, Users, Save } from 'lucide-react';
+import { Plus, Dices, Download, Users, Save } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 
 /* Administration du tirage au sort : configuration, participants (import CSV),
- * lancement (crypto serveur), gagnants + export. */
+ * lancement (crypto serveur), gagnants + export.
+ * Les rangs pointent vers les LOTS PARTAGÉS (marqués « pour tirage » dans Lots). */
 export default function TiragePage() {
   const { companySlug } = useParams();
   const [draw, setDraw] = useState(null);
   const [gameMode, setGameMode] = useState('wheel');
-  const [form, setForm] = useState({ name: 'Tirage au sort', startsAt: '', endsAt: '', winnersCount: 3, prizes: [{ rank: 1, label: 'Gros lot' }, { rank: 2, label: 'Lot n°2' }, { rank: 3, label: 'Lot n°3' }], excludePastWinners: true, open: true });
+  const [rafflePrizes, setRafflePrizes] = useState([]); // lots partagés « pour tirage »
+  const [form, setForm] = useState({
+    name: 'Tirage au sort', startsAt: '', endsAt: '', winnersCount: 3,
+    prizes: [{ rank: 1, prizeId: '' }, { rank: 2, prizeId: '' }, { rank: 3, prizeId: '' }],
+    excludePastWinners: true, open: true,
+  });
   const [csv, setCsv] = useState('');
   const [rolling, setRolling] = useState(false);
   const { show, Toast } = useToast();
@@ -21,6 +27,7 @@ export default function TiragePage() {
     const d = await fetch(`/api/${companySlug}/raffle`).then((r) => r.json());
     setDraw(d.draw || null);
     setGameMode(d.gameMode || 'wheel');
+    setRafflePrizes(d.rafflePrizes || []);
     if (d.draw) {
       setForm((f) => ({
         ...f,
@@ -28,7 +35,10 @@ export default function TiragePage() {
         startsAt: d.draw.startsAt ? d.draw.startsAt.slice(0, 10) : '',
         endsAt: d.draw.endsAt ? d.draw.endsAt.slice(0, 10) : '',
         winnersCount: d.draw.winnersCount,
-        prizes: Array.isArray(d.draw.prizes) && d.draw.prizes.length ? d.draw.prizes : f.prizes,
+        // Les rangs sauvegardés pointent vers des lots partagés (prizeId)
+        prizes: Array.isArray(d.draw.prizes) && d.draw.prizes.length
+          ? d.draw.prizes.map((p, i) => ({ rank: p.rank ?? i + 1, prizeId: p.prizeId || '' }))
+          : f.prizes,
         excludePastWinners: d.draw.excludePastWinners,
         open: d.draw.status === 'OPEN',
       }));
@@ -36,13 +46,18 @@ export default function TiragePage() {
   }, [companySlug]);
   useEffect(() => { load(); }, [load]);
 
+  const prizeLabel = (prizeId) => rafflePrizes.find((p) => p.id === prizeId)?.label || '—';
+  const prizeStock = (prizeId) => rafflePrizes.find((p) => p.id === prizeId)?.stock;
+
   async function saveConfig(e) {
     e.preventDefault();
+    const missing = form.prizes.find((p) => !p.prizeId);
+    if (missing) { show('Choisissez un lot pour chaque rang.', 'error'); return; }
     const res = await fetch(`/api/${companySlug}/raffle`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...form,
-        prizes: form.prizes.filter((p) => p.label.trim()),
+        prizes: form.prizes.map((p, i) => ({ rank: i + 1, prizeId: p.prizeId })),
         startsAt: form.startsAt || null, endsAt: form.endsAt || null,
       }),
     });
@@ -79,8 +94,6 @@ export default function TiragePage() {
     load();
     window.open(`/${companySlug}/draw`, '_blank');
   }
-
-  const prizeAt = (rank) => form.prizes.find((p) => p.rank === rank)?.label || `Lot n°${rank}`;
 
   return (
     <div className="space-y-8">
@@ -120,27 +133,43 @@ export default function TiragePage() {
               onChange={(e) => setForm({ ...form, endsAt: e.target.value })} />
           </div>
         </div>
+
+        {/* Rangs : sélection des LOTS PARTAGÉS (marqués « pour tirage » dans Lots) */}
         <div>
-          <label className="label">Lots par rang</label>
+          <label className="label">Lots par rang (choisis parmi les lots « pour tirage »)</label>
           <div className="space-y-2">
             {form.prizes.map((p, i) => (
-              <div key={p.rank} className="flex items-center gap-2">
-                <span className="w-16 text-sm font-semibold text-gray-500">Rang {p.rank}</span>
-                <input className="input !py-2" maxLength={120} value={p.label}
-                  onChange={(e) => setForm({ ...form, prizes: form.prizes.map((x) => (x.rank === p.rank ? { ...x, label: e.target.value } : x)) })} />
+              <div key={i} className="flex items-center gap-2">
+                <span className="w-16 text-sm font-semibold text-gray-500">Rang {i + 1}</span>
+                <select className="input !py-2" value={p.prizeId} aria-label={`Lot du rang ${i + 1}`}
+                  onChange={(e) => setForm({ ...form, prizes: form.prizes.map((x, xi) => (xi === i ? { ...x, prizeId: e.target.value } : x)) })}>
+                  <option value="">— choisir un lot —</option>
+                  {rafflePrizes.map((rp) => (
+                    <option key={rp.id} value={rp.id}>
+                      {rp.label}{rp.stock != null ? ` (stock : ${rp.stock})` : ' (stock : ∞)'}
+                    </option>
+                  ))}
+                </select>
                 {form.prizes.length > 1 && (
-                  <button type="button" onClick={() => setForm({ ...form, prizes: form.prizes.filter((x) => x.rank !== p.rank) })}
+                  <button type="button"
+                    onClick={() => setForm({ ...form, prizes: form.prizes.filter((_, xi) => xi !== i) })}
                     className="text-red-500 hover:underline text-xs">Retirer</button>
                 )}
               </div>
             ))}
             <button type="button"
-              onClick={() => setForm({ ...form, prizes: [...form.prizes, { rank: form.prizes.length + 1, label: `Lot n°${form.prizes.length + 1}` }] })}
+              onClick={() => setForm({ ...form, prizes: [...form.prizes, { rank: form.prizes.length + 1, prizeId: '' }] })}
               className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs hover:bg-gray-50 dark:hover:bg-gray-800">
               <Plus className="h-3.5 w-3.5" /> Ajouter un rang
             </button>
           </div>
+          {rafflePrizes.length === 0 && (
+            <p className="mt-2 text-xs text-amber-600">
+              ⚠️ Aucun lot « pour tirage » : activez le toggle <strong>Tirage</strong> sur vos lots dans l’onglet <Link href={`/${companySlug}/lots`} className="underline">Lots</Link>.
+            </p>
+          )}
         </div>
+
         <label className="flex items-center gap-3 text-sm">
           <input type="checkbox" className="h-4 w-4 accent-brand-600" checked={form.excludePastWinners}
             onChange={(e) => setForm({ ...form, excludePastWinners: e.target.checked })} />
