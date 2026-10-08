@@ -33,6 +33,14 @@ export default async function PlayPage({ params, searchParams }) {
   // Campagne hors période ? -> page « revenez du … » (dates posées dans les réglages)
   try {
     const cs0 = await getCompanySettings(company.id);
+    // Mode de jeu configuré (quels jeux existent) + jeu ACTIF affiché publiquement
+    const gmRows = await db.companySetting.findMany({
+      where: { companyId: company.id, key: { in: ['GAME_MODE', 'GAME_ACTIVE'] } },
+      select: { key: true, value: true },
+    });
+    const gmMap = Object.fromEntries(gmRows.map((g) => [g.key, g.value]));
+    const gameMode = gmMap.GAME_MODE || 'wheel';
+    const gameActive = gmMap.GAME_ACTIVE || gameMode;
     const now = new Date();
     const startAt = cs0.CAMPAIGN_START ? new Date(cs0.CAMPAIGN_START) : null;
     const endAt = cs0.CAMPAIGN_END ? new Date(cs0.CAMPAIGN_END) : null;
