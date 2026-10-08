@@ -196,6 +196,40 @@ export default async function LandingPage() {
           })}
         </div>
       </section>
+      {/* Entreprises participantes */}
+      <section id="entreprises" className="mx-auto max-w-6xl px-4 py-14">
+        <SectionHead
+          eyebrow={T('common.companies')}
+          title={T('landing.companiesTitle')}
+          sub={companiesWithReviews.length === 0 ? L('The first businesses are coming soon — create yours!', 'الشركات الأولى قادمة قريبًا — أنشئ شركتك!', 'Les premières entreprises arrivent bientôt — créez la vôtre !') : null}
+        />
+        {companiesWithReviews.length > 0 && (
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {companiesWithReviews.map((c) => (
+              <div key={c.id} className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-center gap-3">
+                  {c.logo
+                    ? // eslint-disable-next-line @next/next/no-img-element
+                      <img src={c.logo} alt="" className="h-10 w-10 rounded-lg object-contain" loading="lazy" />
+                    : <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-lg">🏪</span>}
+                  <h3 className="font-bold">{c.name}</h3>
+                </div>
+                <p className="mt-3 text-sm"><Stars rating={c.rating} /> <span className="font-semibold">{c.rating.toFixed(1).replace('.', ',')}</span></p>
+                <p className="text-xs text-gray-500">{c.reviewCount} {L('reviews', 'تقييمات', 'avis')}</p>
+                <Link href={`/entreprises/${c.slug}`} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline">
+                  {L('See reviews', 'عرض التقييمات', 'Voir les avis')} <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="mt-8 text-center">
+          <Link href="/entreprises" className="rounded-xl border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
+            {L('See all businesses', 'عرض جميع الشركات', 'Voir toutes les entreprises')}
+          </Link>
+        </p>
+      </section>
+
 
 
       {/* ===== Comment ça marche + Fonctionnalités (brique unique) ===== */}
@@ -248,26 +282,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Tirage en direct (démo animée) */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
-          <div>
-            <Eyebrow>{L('For your events', 'لفعالياتكم', 'Pour vos événements')}</Eyebrow>
-            <h2 className="text-2xl font-extrabold sm:text-3xl">{T('landing.raffleTitle')}</h2>
-            <p className="mt-3 text-gray-600">{T('landing.raffleText')}</p>
-            <ul className="mt-4 space-y-2 text-sm text-gray-600">
-              {[L('Fullscreen projection mode', 'وضع العرض بملء الشاشة', 'Mode projection plein écran'),
-                L('Verifiable randomness (server-side)', 'Aléa vérifiable côté serveur', 'Aléa vérifiable côté serveur'),
-                L('Winners export (CSV)', 'Export des gagnants (CSV)', 'Export des gagnants (CSV)')].map((x) => (
-                <li key={x} className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> {x}</li>
-              ))}
-            </ul>
-            <Link href="/inscription" className="btn-primary mt-6 !py-2.5">{T('common.start')}</Link>
-          </div>
-          <DrawDemo />
-        </div>
-      </section>
-
 
       {/* Dashboard illustré */}
       <section className="border-y border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-950">
@@ -306,40 +320,6 @@ export default async function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Entreprises participantes */}
-      <section id="entreprises" className="mx-auto max-w-6xl px-4 py-14">
-        <SectionHead
-          eyebrow={T('common.companies')}
-          title={T('landing.companiesTitle')}
-          sub={companiesWithReviews.length === 0 ? L('The first businesses are coming soon — create yours!', 'الشركات الأولى قادمة قريبًا — أنشئ شركتك!', 'Les premières entreprises arrivent bientôt — créez la vôtre !') : null}
-        />
-        {companiesWithReviews.length > 0 && (
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {companiesWithReviews.map((c) => (
-              <div key={c.id} className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
-                <div className="flex items-center gap-3">
-                  {c.logo
-                    ? // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.logo} alt="" className="h-10 w-10 rounded-lg object-contain" loading="lazy" />
-                    : <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-lg">🏪</span>}
-                  <h3 className="font-bold">{c.name}</h3>
-                </div>
-                <p className="mt-3 text-sm"><Stars rating={c.rating} /> <span className="font-semibold">{c.rating.toFixed(1).replace('.', ',')}</span></p>
-                <p className="text-xs text-gray-500">{c.reviewCount} {L('reviews', 'تقييمات', 'avis')}</p>
-                <Link href={`/entreprises/${c.slug}`} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline">
-                  {L('See reviews', 'عرض التقييمات', 'Voir les avis')} <span aria-hidden="true">→</span>
-                </Link>
-              </div>
-            ))}
-          </div>
-        )}
-        <p className="mt-8 text-center">
-          <Link href="/entreprises" className="rounded-xl border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
-            {L('See all businesses', 'عرض جميع الشركات', 'Voir toutes les entreprises')}
-          </Link>
-        </p>
       </section>
 
       {/* Avis récents */}
